@@ -25,6 +25,7 @@ button.btn.sm{padding:5px 11px;font-size:13px}button.btn.danger{color:#b42318}bu
 .count{background:var(--soft);color:var(--blue);border-radius:99px;padding:1px 9px;font-size:12px;margin-left:6px;font-weight:700}
 .act{white-space:nowrap}td.act button{margin-right:4px}tr.mine td:first-child{font-weight:600;color:var(--blue)}
 .grid .card[data-go]{cursor:pointer;transition:.15s}.grid .card[data-go]:hover{border-color:#c7d7f5;transform:translateY(-2px)}
+.pager{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:12px}.pager .pi{color:var(--muted);font-size:13px;margin-right:8px}.pager button.btn.sm{min-width:34px}.pager .gap{color:var(--muted);padding:0 4px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 ul.recent{list-style:none;margin:0;padding:0}ul.recent li{padding:8px 0;border-bottom:1px solid var(--line)}ul.recent li:last-child{border:0}
 dialog{border:0;border-radius:18px;padding:0;width:min(620px,94vw);max-height:92vh;box-shadow:0 24px 70px #0a1a3a55;color:var(--ink)}
@@ -48,10 +49,10 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 #printDoc h4{font-size:9pt;margin:12px 0 3px;font-weight:700;page-break-after:avoid}
 #printDoc .psub{margin:6px 0 2px;page-break-after:avoid}#printDoc .pnote{font-style:italic;margin-bottom:2px}#printDoc p{margin:6px 0}
 #printDoc table{border-collapse:collapse;width:100%;margin:3px 0 10px}
-#printDoc th,#printDoc td{border:1px solid #000;padding:2px 4px;vertical-align:top;overflow-wrap:anywhere;background:none;color:#000;font-size:inherit}
+#printDoc th,#printDoc td{border:1px solid #000;padding:2px 4px;vertical-align:top;overflow-wrap:break-word;word-break:normal;hyphens:manual;background:none;color:#000;font-size:inherit}
 #printDoc th{font-weight:400;text-align:center;vertical-align:middle}#printDoc th.no{width:5%;white-space:nowrap}#printDoc td.c{text-align:center}
 #printDoc tr{page-break-inside:avoid}#printDoc thead{display:table-header-group}#printDoc table.sum{width:100%}#printDoc table.sum th:last-child{width:24%}#printDoc table.sum th.no{width:5%}
-#printDoc a{color:#1a0dab;text-decoration:underline}
+#printDoc a{color:#1a0dab;text-decoration:underline;overflow-wrap:anywhere}#printDoc th{white-space:normal}
 #printDoc .pid{display:flex;gap:18px;justify-content:space-between;margin:10px 0 6px}#printDoc table.pidt{border-collapse:collapse;width:auto;margin:0;flex:none}#printDoc table.pidt td{border:0;padding:1px 8px 1px 0;white-space:nowrap;text-align:left}#printDoc table.pidt tr.isub td:first-child{padding-left:5mm}
 #printDoc .pphoto{width:33mm;height:40mm;border:1px solid #000;flex:none;display:flex;align-items:center;justify-content:center;color:#888;overflow:hidden}#printDoc .pphoto img{width:100%;height:100%;object-fit:cover}
 #printDoc .psign{display:grid;grid-template-columns:46% 46%;justify-content:space-between;margin-top:14px;page-break-inside:avoid}#printDoc .psn{margin-top:17mm}
@@ -108,26 +109,26 @@ career:{label:"Pendidikan & Karier",types:{
  jab:{name:"Jabatan Akademik Dosen",f:[{k:"nama",l:"Nama Jabatan"},{k:"tmt",l:"TMT (Terhitung Mulai Tanggal)"}]},
  kerja:{name:"Riwayat Kerja Institusional & Penugasan",f:[{k:"nama",l:"Nama Jabatan"},{k:"inst",l:"Institusi"},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]}}},
 research:{label:"Penelitian & Publikasi",types:{
- pub:{name:"Publikasi Jurnal",f:[{k:"kat",l:"Kategori publikasi (bagian VII DRH)",o:PUBKAT,w:1},{k:"penulis",l:"Nama Penulis",w:1},{k:"judul",l:"Judul Artikel",w:1},{k:"tahun",l:"Tahun terbit (untuk pengurutan)"},{k:"jurnal",l:"Jurnal (nama; no.; vol./tahun; ISSN; peringkat; link)",a:1},{k:"peran",l:"Peranan",o:["Penulis pertama","Corresponding author","Penulis pertama dan corresponding author","Penulis anggota"]},{k:"bukti",l:"Bukti dokumen / link"}]},
+ pub:{name:"Publikasi Jurnal",f:[{k:"kat",l:"Kategori publikasi (bagian VII DRH)",o:PUBKAT,w:1},{k:"penulis",l:"Nama Penulis",w:1},{k:"judul",l:"Judul Artikel",w:1},{k:"tahun",l:"Tahun terbit (untuk pengurutan)"},{k:"jurnal",l:"Jurnal (nama; no.; vol./tahun; ISSN; peringkat; link)",a:1},{k:"peran",l:"Peranan"},{k:"bukti",l:"Bukti dokumen / link"}]},
  buku:{name:"Buku / Materi Ajar",f:[{k:"penyusun",l:"Nama Penyusun"},{k:"judul",l:"Judul"},{k:"tempat",l:"Tempat dan Tahun Publikasi"},{k:"penerbit",l:"Penerbit"},{k:"bukti",l:"Bukti dokumen / link"}]},
- hibah:{name:"Hibah Penelitian",f:[{k:"periode",l:"Periode",o:PER},{k:"tim",l:"Tim Peneliti"},{k:"peran",l:"Peranan",o:["Ketua","Anggota"]},{k:"judul",l:"Judul Penelitian",w:1},{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"tahun",l:"Tahun/Periode"},{k:"bukti",l:"Bukti dokumen / link"}]},
+ hibah:{name:"Hibah Penelitian",f:[{k:"periode",l:"Periode",o:PER},{k:"tim",l:"Tim Peneliti"},{k:"peran",l:"Peranan"},{k:"judul",l:"Judul Penelitian",w:1},{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"tahun",l:"Tahun/Periode"},{k:"bukti",l:"Bukti dokumen / link"}]},
  karya:{name:"Karya Bermanfaat (HAKI, Paten, dll.)",f:[{k:"tim",l:"Nama Tim"},{k:"jenis",l:"Jenis Karya"},{k:"judul",l:"Judul Karya",w:1},{k:"tahun",l:"Tahun"},{k:"ket",l:"Keterangan"},{k:"bukti",l:"Bukti dokumen / link"}]},
  hibRL:{name:"Rekap Hibah per Level (sejak menjadi dosen)",f:[{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"jumlah",l:"Jumlah"}]}}},
 teaching:{label:"Pengajaran",types:{
  mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"bukti",l:"Bukti dokumen / link"}]},
- bimb:{name:"Pembimbingan Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nama",l:"Nama Mahasiswa"},{k:"nim",l:"NIM"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"peran",l:"Peranan",o:["Ketua","Ko-pembimbing"]},{k:"status",l:"Status (khusus S3)",o:["Telah selesai","Penelitian tahap III"]},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
+ bimb:{name:"Pembimbingan Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nama",l:"Nama Mahasiswa"},{k:"nim",l:"NIM"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"peran",l:"Peranan"},{k:"status",l:"Status (khusus S3)",o:["Telah selesai","Penelitian tahap III"]},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  uji:{name:"Penguji Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nim",l:"NIM"},{k:"nama",l:"Nama Mahasiswa"},{k:"fak",l:"Fakultas/Sekolah"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  mhs:{name:"Pembimbingan Kemahasiswaan",f:[{k:"nama",l:"Nama Kegiatan",w:1},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
  muda:{name:"Pembimbingan Dosen Muda",f:[{k:"nama",l:"Nama/NIP Dosen Muda"},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link",w:1}]},
  bimbR:{name:"Rekap Pembimbingan Mahasiswa (sejak menjadi dosen)",f:[{k:"jenjang",l:"Jenjang",o:JJ},{k:"jumlah",l:"Jumlah mahasiswa"}]},
  ujiR:{name:"Rekap Penguji Mahasiswa (sejak menjadi dosen)",f:[{k:"jenjang",l:"Jenjang",o:JJ},{k:"jumlah",l:"Jumlah mahasiswa yang diuji"}]}}},
 community:{label:"Pengabdian & Profesional",types:{
- abdi:{name:"Pengabdian kepada Masyarakat",f:[{k:"periode",l:"Periode",o:PER},{k:"tim",l:"Tim"},{k:"peran",l:"Peranan",o:["Ketua","Anggota","Instruktur","Tenaga ahli","Lainnya"]},{k:"nama",l:"Nama Kegiatan",w:1},{k:"tempat",l:"Tempat"},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
- inst:{name:"Pengembangan Institusi",f:[{k:"tingkat",l:"Tingkat",o:["Program Studi","Fakultas/Sekolah","ITB"]},{k:"peran",l:"Peranan",o:["Ketua","Anggota","Lainnya"]},{k:"nama",l:"Nama Kegiatan",w:1},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
+ abdi:{name:"Pengabdian kepada Masyarakat",f:[{k:"periode",l:"Periode",o:PER},{k:"tim",l:"Tim"},{k:"peran",l:"Peranan"},{k:"nama",l:"Nama Kegiatan",w:1},{k:"tempat",l:"Tempat"},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
+ inst:{name:"Pengembangan Institusi",f:[{k:"tingkat",l:"Tingkat",o:["Program Studi","Fakultas/Sekolah","ITB"]},{k:"peran",l:"Peranan"},{k:"nama",l:"Nama Kegiatan",w:1},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
  rev:{name:"Riwayat Reviewer",f:[{k:"nama",l:"Nama Kegiatan",w:1},{k:"peran",l:"Peran"},{k:"inst",l:"Institusi"},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
  abdR:{name:"Rekap Pengabdian per Peran (sejak menjadi dosen)",f:[{k:"peran",l:"Peran dalam kegiatan",o:["Ketua","Anggota"]},{k:"jumlah",l:"Jumlah"}]}}},
 activities:{label:"Kegiatan Ilmiah",types:{
- ilmiah:{name:"Kegiatan Ilmiah",f:[{k:"periode",l:"Periode",o:PER},{k:"nama",l:"Nama Kegiatan",w:1},{k:"level",l:"Level",o:LV},{k:"tempat",l:"Tempat, Tahun"},{k:"peran",l:"Peranan",o:["Peserta","Narasumber","Pembicara","Lainnya"]},{k:"bukti",l:"Bukti dokumen / link"}]},
+ ilmiah:{name:"Kegiatan Ilmiah",f:[{k:"periode",l:"Periode",o:PER,x:1},{k:"nama",l:"Nama Kegiatan",w:1},{k:"level",l:"Level",o:LV},{k:"tempat",l:"Tempat, Tahun"},{k:"peran",l:"Peranan"},{k:"bukti",l:"Bukti dokumen / link"}]},
  pelatihan:{name:"Pendidikan Non-Formal & Pelatihan",f:[{k:"nama",l:"Nama Pendidikan/Pelatihan",w:1},{k:"inst",l:"Institusi/Perguruan Tinggi"},{k:"negara",l:"Negara"},{k:"tahun",l:"Tahun Lulus"},{k:"gelar",l:"Gelar"},{k:"bidang",l:"Bidang"},{k:"bukti",l:"Bukti dokumen / link"}]},
  ilmR:{name:"Rekap Kegiatan Ilmiah per Level (sejak menjadi dosen)",f:[{k:"level",l:"Level kegiatan",o:LV},{k:"jumlah",l:"Jumlah"}]}}},
 awards:{label:"Penghargaan & Jejaring",types:{
@@ -188,8 +189,18 @@ $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-
 /* ===== Render ===== */
 function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>")}
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
-function typeCard(s,k){const T=CFG[s].types[k];let list=mineE().filter(e=>e.sec===s&&e.type===k);if(s==="research")list=sortY(list);
- const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${T.f.map(f=>`<th>${esc(f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${list.map((e,i)=>`<tr><td>${i+1}</td>${T.f.map(f=>`<td>${cell(e.v[f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
+const PG=5;let pg={};
+function listOf(s,k){let list=mineE().filter(e=>e.sec===s&&e.type===k);return s==="research"?sortY(list):list}
+function pager(key,p,pages,total){
+ if(pages<2)return"";
+ const nums=[];for(let i=1;i<=pages;i++){if(pages<=7||i===1||i===pages||Math.abs(i-p)<=1)nums.push(i);else if(nums[nums.length-1]!=="…")nums.push("…")}
+ const b=(n,l,dis,cls)=>`<button type="button" class="btn sm${cls||""}" data-pg="${esc(key)}" data-p="${n}"${dis?" disabled":""}>${l}</button>`;
+ return `<div class="pager"><span class="pi">${(p-1)*PG+1}–${Math.min(p*PG,total)} dari ${total}</span>${b(p-1,"‹",p===1)}${nums.map(n=>n==="…"?'<span class="gap">…</span>':b(n,n,0,n===p?" primary":"")).join("")}${b(p+1,"›",p===pages)}</div>`}
+function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
+ const FS=T.f.filter(f=>!f.x||list.some(e=>e.v[f.k]));
+ const pages=Math.max(1,Math.ceil(list.length/PG)),p=Math.min(Math.max(1,pg[key]||1),pages);pg[key]=p;
+ const off=(p-1)*PG,part=list.slice(off,off+PG);
+ const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${FS.map(f=>`<th>${esc(f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${FS.map(f=>`<td>${cell(e.v[f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
  return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></div>${tbl}</div>`}
 function renderSec(s){$("e-"+s).innerHTML=Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
 function renderMetrics(){const cnt=s=>mineE().filter(e=>e.sec===s).length;
@@ -210,7 +221,7 @@ function refresh(){const tc=$("tglCetak");if(tc)tc.value=curD().tgl||"";renderHe
 
 /* ===== Form tambah / ubah ===== */
 function buildFields(val,v){const [s,k]=val.split("|"),T=CFG[s].types[k];
- $("dFields").innerHTML=T.f.map(f=>{const id="f_"+f.k,cur=v[f.k]||"";let inp;
+ $("dFields").innerHTML=T.f.filter(f=>!f.x||v[f.k]).map(f=>{const id="f_"+f.k,cur=v[f.k]||"";let inp;
   if(f.o)inp=`<select id="${id}" data-k="${f.k}"><option value=""></option>${f.o.map(o=>`<option${o===cur?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
   else if(f.a)inp=`<textarea id="${id}" data-k="${f.k}" rows="3">${esc(cur)}</textarea>`;
   else inp=`<input id="${id}" data-k="${f.k}" value="${esc(cur)}"${f.dl?` list="dl_${f.k}"`:""}>${f.dl?`<datalist id="dl_${f.k}">${f.dl.map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`:""}`;
@@ -234,15 +245,16 @@ $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  document.querySelectorAll("#dFields [data-k]").forEach(el=>{const x=el.value.trim();v[el.dataset.k]=x;if(x)any=true});
  if(!any){toast("Isi minimal satu kolom.");return}
  const wasEdit=!!editId;
- if(wasEdit){const e=entries.find(x=>x.id===editId);if(e)e.v=v}else entries.push({id:uid(),sec:s,type:k,v,t:Date.now(),d:cur});
+ if(wasEdit){const e=entries.find(x=>x.id===editId);if(e)e.v=v}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
  persist();refresh();$("dlg").close();toast(wasEdit?"Perubahan disimpan.":"Data ditambahkan.");
  if(!wasEdit&&ctxSec==="dashboard")show(s)});
 
 /* ===== Aksi: hapus, ekspor, impor, reset ===== */
-document.addEventListener("click",e=>{const t=e.target.closest("[data-add],[data-edit],[data-del],[data-go],[data-adddosen],[data-editdosen],[data-deldosen],[data-pick]");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest("[data-add],[data-edit],[data-del],[data-go],[data-adddosen],[data-editdosen],[data-deldosen],[data-pick],[data-pg]");if(!t)return;
+ if(t.dataset.pg){pg[t.dataset.pg]=+t.dataset.p;renderSec(t.dataset.pg.split("|")[0]);return}
  if(t.dataset.adddosen)openDosen();
  else if(t.dataset.editdosen)openDosen(t.dataset.editdosen);
- else if(t.dataset.pick){cur=t.dataset.pick;persist();refresh();show("dashboard")}
+ else if(t.dataset.pick){cur=t.dataset.pick;pg={};persist();refresh();show("dashboard")}
  else if(t.dataset.deldosen){const D=dosens.find(x=>x.id===t.dataset.deldosen);if(D&&dosens.length>1&&confirm("Hapus dosen \""+D.nama+"\" beserta semua datanya?")){dosens=dosens.filter(x=>x.id!==D.id);entries=entries.filter(x=>x.d!==D.id);if(cur===D.id)cur=dosens[0].id;persist();refresh();toast("Dosen dihapus.")}}
  else if(t.dataset.add)openForm(t.dataset.add,t.dataset.type);
  else if(t.dataset.edit)openForm(null,null,t.dataset.edit);
@@ -298,7 +310,8 @@ function ptab(cols,list){
  return `<table>${head}<tbody>${body}</tbody></table>`}
 const psum=(h1,h2,items)=>`<table class="sum"><thead><tr><th class="no">No.</th><th>${h1}</th><th>${h2}</th></tr></thead><tbody>${items.map(([a,b],i)=>`<tr><td class="c">${i+1}</td><td>${esc(a)}</td><td class="c">${b}</td></tr>`).join("")}</tbody></table>`;
 const num=v=>parseInt(String(v||"").replace(/\D/g,""),10)||0;
-const cntOf=(rek,earl,k,val,def)=>{const r=rek.filter(e=>(e.v[k]||"")===val);return r.length?r.reduce((a,e)=>a+num(e.v.jumlah),0):earl.filter(e=>(e.v[k]||def||"")===val).length};
+const nz=x=>String(x||"").trim().toLowerCase();
+const cntOf=(rek,earl,k,val,def)=>{const r=rek.filter(e=>nz(e.v[k])===nz(val));return r.length?r.reduce((a,e)=>a+num(e.v.jumlah),0):earl.filter(e=>nz(e.v[k]||def)===nz(val)).length};
 const jj=(list,pre,lab,cols)=>JJ.map((j,i)=>`<div class="psub">${pre}.${i+1}. ${lab} ${j}</div>${ptab(cols,list.filter(e=>(e.v.jenjang||"S1")===j))}`).join("");
 function buildDoc(){
  const D=curD();pName=coreName(D.nama);
