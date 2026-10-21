@@ -93,6 +93,7 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <button type="button" id="cloudBtn" class="btn sm" style="position:fixed;right:14px;bottom:14px;z-index:20;box-shadow:0 4px 14px #0003">☁ Database</button>
 <dialog id="dlgAuth"><form id="frmAuth" method="dialog">
 <h3>Simpan ke database</h3><div class="dsub" id="authInfo"></div>
@@ -101,14 +102,14 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 <div class="dact"><button type="button" class="btn" id="aClose">Tutup</button><button type="button" class="btn danger" id="aOut" hidden>Keluar</button><button type="button" class="btn" id="aUp">Daftar</button><button type="submit" class="btn primary" id="aIn">Masuk</button></div>
 </form></dialog>
 <dialog id="dlgImp" style="width:min(900px,96vw)"><form id="frmImp" method="dialog">
-<h3>Impor mata kuliah dari PDF SK</h3><div class="dsub" id="impInfo"></div>
+<h3>Impor mata kuliah dari file SK (PDF / Excel)</h3><div class="dsub" id="impInfo"></div>
 <label>Semester/Tahun yang dicatat<input id="impSem" placeholder="mis. Semester I 2021/2022"></label>
 <div class="toolbar" style="margin:12px 0 6px;align-items:center"><span class="muted">Dosen yang belum cocok dengan profil:</span><button type="button" class="btn sm" id="impSkip">Semua lewati</button><button type="button" class="btn sm" id="impNew">Semua buat profil baru</button></div>
 <div id="impList" style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
 <div class="muted" id="impSum" style="margin-top:8px"></div>
 <div class="dact"><button type="button" class="btn" id="impCancel">Batal</button><button type="button" class="btn primary" id="impGo">Impor</button></div></form></dialog>
 <dialog id="dlgMhs" style="width:min(900px,96vw)"><form id="frmMhs" method="dialog">
-<h3>Impor pembimbingan &amp; penguji mahasiswa dari PDF SK</h3><div class="dsub" id="mInfo"></div>
+<h3>Impor pembimbingan &amp; penguji mahasiswa dari file SK (PDF / Excel)</h3><div class="dsub" id="mInfo"></div>
 <div style="display:grid;gap:6px;margin:10px 0">
 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mBim" style="width:auto"><span>Pembimbingan mahasiswa<span class="muted" id="mBimN"></span></span></label>
 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mSid" style="width:auto"><span>Penguji sidang, dimasukkan ke Penguji mahasiswa<span class="muted" id="mSidN"></span></span></label>
@@ -784,8 +785,8 @@ function cocok(nama){const n=normNama(nama);if(!n)return null;
  if(t.length>=2){const c=dosens.filter(d=>{const u=normNama(d.nama).split(" ");return u.length>=2&&(t.every(w=>u.includes(w))||u.every(w=>t.includes(w)))});if(c.length===1)return c[0]}
  return null}
 function rencana(dosenPdf){return dosenPdf.map(p=>{const seen=new Map();
-  p.matakuliah.forEach(m=>{if(m.kode&&!seen.has(m.kode))seen.set(m.kode,bersih(m.nama))});   // beberapa kelas = satu matakuliah
-  const h=cocok(p.nama);return{nama:p.nama,mk:[...seen].map(([kode,nama])=>({kode,nama})),target:h?h.id:"",cocok:!!h}})
+  p.matakuliah.forEach(m=>{const key=m.kode||bersih(m.nama);if(key&&!seen.has(key))seen.set(key,{kode:m.kode||"",nama:bersih(m.nama),sem:m.sem||"",jenjang:m.jenjang||"",fak:m.fak||""})});   // beberapa kelas = satu matakuliah
+  const h=cocok(p.nama);return{nama:p.nama,mk:[...seen.values()],target:h?h.id:"",cocok:!!h}})
   .filter(r=>r.mk.length).sort((a,b)=>b.cocok-a.cocok)}
 function semesterDari(pages,namaFile){
  const teks=pages.slice(0,2).map(p=>p.map(i=>i.str).join("")).join(" ");
@@ -798,11 +799,94 @@ function terapkan(plan,sem){
  plan.forEach(r=>{if(r.target==="")return;
   let id=r.target;
   if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
-  const ada=new Set(entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk"&&e.v.sem===sem).map(e=>String(e.v.mk||"").split(" ")[0]));
-  r.mk.forEach(m=>{if(ada.has(m.kode)){lewat++;return}ada.add(m.kode);
-   entries.push({id:uid(),sec:"teaching",type:"mk",v:{mk:m.kode+" "+m.nama,sem:sem},t:Date.now(),d:id});tambah++})});
+  const ada=new Set();entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk").forEach(e=>{const sm=e.v.sem||"",mk=String(e.v.mk||"");ada.add(sm+"|"+mk.split(" ")[0]);ada.add(sm+"|"+mk)});
+  r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=sm+"|"+(m.kode||label);
+   if(ada.has(key)){lewat++;return}ada.add(key);
+   const v={mk:label,sem:sm};if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
+   entries.push({id:uid(),sec:"teaching",type:"mk",v:v,t:Date.now(),d:id});tambah++})});
  persist();refresh();return{tambah,lewat,baru}}
 window.imporSK={parseSK,rencana,semesterDari,terapkan,parseMahasiswa,rencanaMhs,terapkanMhs,bukaMhs};
+/* --- pembaca Excel (.xlsx / .xls / .csv): kolom dikenali dari judul kolom --- */
+let pendingMhs=null;
+const sel=v=>String(v==null?"":v).replace(/\s+/g," ").trim();
+const kunci=t=>sel(t).toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+function peranDari(t){t=kunci(t);if(/seminar|penilai/.test(t))return"seminar";if(/sidang|penguji|ujian/.test(t))return"sidang";return"bimb"}
+function tipeKolom(h){const t=kunci(h);if(!t)return"";
+ if(/^(peran|peranan|role|sebagai|jenis penugasan)$/.test(t))return"peran";
+ if(/^(nim|nomor induk|no induk|nomor induk mahasiswa)$/.test(t))return"nim";
+ if(/nama mahasiswa|^mahasiswa$|nama peserta/.test(t))return"mhs";
+ if(/pembimbing|penguji|penilai|promotor/.test(t))return"role";
+ if(/kode/.test(t))return/(dan|nama)/.test(t)?"mk":"kode";
+ if(/mata ?kuliah|matakuliah|^mk$|nama mk|nama kuliah|praktikum/.test(t))return"mk";
+ if(/dosen|pengampu|pengajar|staf/.test(t))return"dosen";
+ if(/semester|^smt|tahun ajaran/.test(t))return"sem";
+ if(/jenjang|strata/.test(t))return"jenjang";
+ if(/fakultas|sekolah|prodi|program studi/.test(t))return"fak";
+ if(t==="nama")return"nama";
+ return""}
+const pecahDosen=v=>String(v==null?"":v).split(/\n|;|\s\/\s/).map(x=>x.replace(/^\s*\d+[.)]\s+/,"").replace(/\s+/g," ").trim()).filter(x=>x&&!/^[-\u2013\u2014]$/.test(x));
+function bacaSheet(rows){
+ let h=-1,tp=null;
+ for(let i=0;i<Math.min(rows.length,40);i++){const t=rows[i].map(tipeKolom),has=x=>t.includes(x);
+  if((has("nim")&&(has("role")||has("dosen")))||((has("mk")||has("kode"))&&!has("nim"))){h=i;tp=t;break}}
+ if(h<0)return null;
+ const col=x=>tp.indexOf(x),data=rows.slice(h+1),nimC=col("nim");
+ if(nimC>=0){                                   /* daftar mahasiswa: pembimbingan / penguji */
+  let mC=col("mhs");if(mC<0)mC=col("nama");
+  const roles=[];tp.forEach((x,i)=>{if(x==="role")roles.push({i:i,role:peranDari(rows[h][i])})});
+  const dC=col("dosen"),pC=col("peran"),rec=[];let lastD="";
+  data.forEach(r=>{const nim=sel(r[nimC]).replace(/\s/g,"").replace(/\.0$/,"");if(!/^\d{6,}$/.test(nim))return;
+   const nama=mC>=0?sel(r[mC]):"";
+   roles.forEach(o=>pecahDosen(r[o.i]).forEach(d=>rec.push({dosen:d,nim:nim,nama:nama,role:o.role})));
+   if(dC>=0){const v=sel(r[dC]);if(v)lastD=v;
+    const dd=v?pecahDosen(r[dC]):(roles.length?[]:pecahDosen(lastD)),role=pC>=0&&sel(r[pC])?peranDari(r[pC]):"bimb";
+    dd.forEach(d=>rec.push({dosen:d,nim:nim,nama:nama,role:role}))}});
+  return{jenis:"mhs",rec:rec}}
+ /* daftar mata kuliah */
+ let kC=col("kode"),mC=col("mk"),dC=col("dosen");const nC=col("nama"),sC=col("sem"),jC=col("jenjang"),fC=col("fak");
+ if(nC>=0){if(mC<0)mC=nC;else if(dC<0)dC=nC}
+ if(mC<0&&kC<0)return null;
+ const grup=new Map();let lastD="",lastS="";
+ data.forEach(r=>{const dn0=dC>=0?sel(r[dC]):"";if(dn0)lastD=dn0;
+  const sm0=sC>=0?sel(r[sC]):"";if(sm0)lastS=sm0;
+  let kode=kC>=0?sel(r[kC]):"",nama=mC>=0?sel(r[mC]):"";
+  if(!kode&&nama){const m=nama.match(/^([A-Za-z]{2,4}\s?\d{3,4}[A-Za-z]?)\s*[-\u2013:]?\s+(.+)$/);if(m){kode=m[1].replace(/\s/g,"");nama=m[2]}}
+  if(!kode&&!nama)return;
+  if(!nama)nama=kode;
+  const dn=dC>=0?lastD:"",jm=jC>=0?sel(r[jC]).toUpperCase().match(/S[123]/):null;
+  const o={kode:kode,nama:nama,sem:sC>=0?lastS:"",jenjang:jm?jm[0]:"",fak:fC>=0?sel(r[fC]):""};
+  if(!grup.has(dn))grup.set(dn,{nama:dn,matakuliah:[]});grup.get(dn).matakuliah.push(o)});
+ return{jenis:"mk",dosen:[...grup.values()]}}
+async function imporExcel(f){
+ if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
+ try{
+  toast("Membaca Excel\u2026");
+  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),mkMap=new Map(),rec=[];
+  wb.SheetNames.forEach(n=>{const r=bacaSheet(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""}));if(!r)return;
+   if(r.jenis==="mhs"){rec.push(...r.rec);return}
+   r.dosen.forEach(g=>{const k=normNama(g.nama);if(!mkMap.has(k))mkMap.set(k,{nama:g.nama,matakuliah:[]});mkMap.get(k).matakuliah.push(...g.matakuliah)})});
+  const mhObj=rec.length?{jenis:"baris",records:rec}:null;
+  if(!mkMap.size&&!mhObj){toast("Kolom tidak dikenali. Butuh kolom NIM + Dosen/Pembimbing/Penguji, atau Kode/Nama Mata Kuliah. Pakai tombol Template Excel sebagai contoh.");return}
+  if(!mkMap.size){bukaMhs(mhObj,f.name);return}
+  const aktif=dosens.find(d=>d.id===cur)||BASE,tanpa=mkMap.has("")&&!mkMap.get("").nama;
+  const ds=[...mkMap.values()].map(g=>g.nama?g:{nama:aktif.nama,matakuliah:g.matakuliah});
+  plan=rencana(ds);
+  if(tanpa)plan.forEach(r=>{if(r.nama===aktif.nama){r.target=aktif.id;r.cocok=true}});
+  pendingMhs=mhObj?{mh:mhObj,nama:f.name}:null;
+  const semAda=plan.every(r=>r.mk.every(m=>m.sem));
+  $("impSem").value=semAda?"":semesterDari([],f.name);
+  $("impInfo").textContent=f.name+" \u2014 "+plan.length+" dosen terbaca"+(tanpa?" (kolom dosen tidak ada, dianggap milik "+aktif.nama+")":"")+". "+(semAda?"Semester diambil dari kolom Excel.":"Isi Semester/Tahun untuk baris yang belum punya semester.")+(mhObj?" Data mahasiswa di file ini akan diproses setelah mata kuliah.":"");
+  gambar();$("dlgImp").showModal()
+ }catch(err){toast("Gagal membaca Excel: "+err.message)}}
+function templateXlsx(){
+ if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
+ const aktif=dosens.find(d=>d.id===cur)||BASE,wb=XLSX.utils.book_new();
+ const a=XLSX.utils.aoa_to_sheet([["Dosen","Kode MK","Nama Mata Kuliah","Semester/Tahun","Jenjang","Fakultas/Sekolah"],[aktif.nama,"FA1101","Contoh Mata Kuliah","Semester I 2024/2025","S1",aktif.school||""]]);
+ a["!cols"]=[{wch:34},{wch:10},{wch:36},{wch:24},{wch:9},{wch:24}];
+ const b=XLSX.utils.aoa_to_sheet([["NIM","Nama Mahasiswa","Dosen Pembimbing","Penguji Sidang","Penilai Seminar"],["12345678","Contoh Mahasiswa",aktif.nama,"Nama Dosen A\nNama Dosen B",""]]);
+ b["!cols"]=[{wch:12},{wch:28},{wch:34},{wch:34},{wch:34}];
+ XLSX.utils.book_append_sheet(wb,a,"Matakuliah");XLSX.utils.book_append_sheet(wb,b,"Mahasiswa");
+ XLSX.writeFile(wb,"template-impor-pengajaran.xlsx")}
 /* --- antarmuka --- */
 let plan=[];
 const opsi=t=>'<option value=""'+(t===""?" selected":"")+'>Lewati</option><option value="__new"'+(t==="__new"?" selected":"")+'>+ Buat profil baru</option>'+dosens.map(d=>'<option value="'+esc(d.id)+'"'+(t===d.id?" selected":"")+'>'+esc(d.nama)+'</option>').join("");
@@ -810,9 +894,13 @@ function ringkas(){const a=plan.filter(r=>r.target!=="");
  $("impSum").textContent=a.length+" dosen dipilih, "+a.reduce((s,r)=>s+r.mk.length,0)+" matakuliah akan ditambahkan (matakuliah yang sudah ada di semester yang sama dilewati)."}
 function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div><b>'+esc(r.nama)+'</b> <span class="muted">— '+r.mk.length+' matakuliah'+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>').join("");ringkas()}
 {const h=$("teaching").querySelector("h2");
- h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPdf">\ud83d\udcc4 Impor dari PDF SK (matakuliah, pembimbingan, penguji)</button><input type="file" id="fPdf" accept="application/pdf,.pdf" hidden></div>')}
-$("bPdf").onclick=()=>{if(!window.pdfjsLib){toast("Pembaca PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}$("fPdf").click()};
+ h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPdf">\ud83d\udcc4 Impor dari PDF atau Excel (matakuliah, pembimbingan, penguji)</button><button class="btn" id="bTpl" title="Unduh contoh format Excel untuk impor">\u2b07 Template Excel</button><input type="file" id="fPdf" accept="application/pdf,.pdf,.xlsx,.xls,.xlsm,.csv" hidden></div>')}
+$("bPdf").onclick=()=>$("fPdf").click();
+$("bTpl").onclick=templateXlsx;
 $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+ pendingMhs=null;
+ if(/\.(xlsx|xls|xlsm|csv)$/i.test(f.name)){await imporExcel(f);return}
+ if(!window.pdfjsLib){toast("Pembaca PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
  try{
   pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";   /* skrip worker sudah dimuat di halaman, jadi PDF dibaca tanpa worker terpisah */
   toast("Membaca PDF…");
@@ -830,11 +918,11 @@ $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)r
 $("impList").addEventListener("change",e=>{const s=e.target.closest("select");if(!s)return;plan[+s.dataset.i].target=s.value;ringkas()});
 $("impSkip").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target=""});gambar()};
 $("impNew").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target="__new"});gambar()};
-$("impCancel").onclick=()=>$("dlgImp").close();
+$("impCancel").onclick=()=>{pendingMhs=null;$("dlgImp").close()};
 $("impGo").onclick=()=>{const sem=$("impSem").value.trim();
- if(!sem){toast("Isi Semester/Tahun dulu.");return}
+ if(!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
  if(!plan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
- const r=terapkan(plan,sem);$("dlgImp").close();
+ const r=terapkan(plan,sem);$("dlgImp").close();if(pendingMhs){const pm=pendingMhs;pendingMhs=null;setTimeout(()=>bukaMhs(pm.mh,pm.nama),0)}
  toast(r.tambah+" matakuliah ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 
 /* --- impor pembimbingan & penguji mahasiswa --- */
@@ -880,7 +968,7 @@ function bukaMhs(mh,nama){
  $("mInfo").textContent=nama+" — "+nims.size+" mahasiswa, "+mplan.length+" dosen terbaca. Pilih data yang diimpor dan profil tujuan tiap dosen.";
  [["mBim","bimb"],["mSid","sidang"],["mSem","seminar"]].forEach(a=>{const el=$(a[0]);el.disabled=!c[a[1]];
   el.checked=!!c[a[1]]&&(a[1]==="bimb"?mh.jenis==="baris":a[1]==="sidang");
-  $(a[0]+"N").textContent=c[a[1]]?" ("+c[a[1]]+" entri)":" (tidak ada di PDF ini)"});
+  $(a[0]+"N").textContent=c[a[1]]?" ("+c[a[1]]+" entri)":" (tidak ada di file ini)"});
  gambarMhs();$("dlgMhs").showModal()}
 $("mList").addEventListener("change",e=>{const s=e.target.closest("select");if(!s)return;mplan[+s.dataset.i].target=s.value;ringkasMhs()});
 ["mBim","mSid","mSem"].forEach(id=>$(id).onchange=ringkasMhs);
