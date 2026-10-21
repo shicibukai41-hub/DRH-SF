@@ -291,28 +291,42 @@ $("fImp").onchange=e=>{const f=e.target.files[0];if(!f)return;
   const add=arr.filter(validE).filter(x=>!have.has(x.id)).map(x=>({...x,d:ids.has(x.d)?x.d:cur}));entries=entries.concat(add);persist();refresh();toast(nd.length+" dosen dan "+add.length+" data berhasil diimpor.")})
  .catch(()=>toast("File tidak valid.")).finally(()=>{e.target.value=""})};
 $("bRst").onclick=()=>{if(mineE().length&&confirm("Hapus SEMUA data tambahan milik "+curD().nama+"? Data dosen lain dan sumber Excel tidak ikut terhapus.")){mineE().forEach(tombstone);entries=entries.filter(x=>x.d!==cur);persist();refresh();toast("Data dosen ini dihapus.")}};
-/* ===== Sinkron otomatis nama penulis/penyusun/tim ke portofolio dosen lain ===== */
-/* Setiap dosen mendapat SALINAN MANDIRI (id sendiri). Menghapus salinan hanya menghapus di portofolio dosen itu.
+/* ===== Sinkron otomatis nama penulis/penyusun/tim ke portofolio dosen lain =====
+   Setiap dosen mendapat SALINAN MANDIRI (id sendiri). Menghapus salinan hanya menghapus di portofolio dosen itu.
    Hapusan dicatat di dosen.skip agar tidak dibuat ulang saat sinkron berikutnya. */
 const NAMEF={"research|pub":"penulis","research|buku":"penyusun","research|hibah":"tim","research|karya":"tim","community|abdi":"tim"};
-const DEGW=new Set(["s","si","m","sc","msc","ph","d","phd","mt","st","sf","sfarm","mfarm","mkes","kes","farm","se","mm","ma","mp","pd","spd","mpd","mba"]);
-const normTxt=s=>" "+String(s||"").toLowerCase().replace(/[^a-z\s]/g," ").replace(/\s+/g," ").trim()+" ";
-function namaInti(nama){let t=normNama(nama).split(" ").filter(Boolean);while(t.length>2&&DEGW.has(t[t.length-1]))t.pop();return t.join(" ")}
+const TITLEW=new Set(["dr","drs","dra","drg","prof","ir","apt","hj","rer","nat","phd","mt","msc","sfarm","mfarm","mkes","spd","mpd","mba","dan","and","dkk"]);
+/* pecah teks nama jadi kata-kata, buang gelar (S.Si., M.Si., Ph.D., Dr., apt., dst.) */
+function tokensOf(s){return String(s||"").toLowerCase().replace(/\(.*?\)/g," ")
+ .replace(/\bph\.?\s*d\b\.?/g," ").replace(/\b[smd]\.(?:si|sc|sfarm|farm|kes|t|e|pd|ked|h|hum|kom|ars|ak|p|a|m)\b\.?/g," ")
+ .replace(/[^a-z\s]/g," ").split(/\s+/).filter(t=>t&&!TITLEW.has(t))}
+function winMatch(W,d){const used=new Set();let full=0;const rest=[];
+ for(const t of W){const j=d.findIndex((x,k)=>!used.has(k)&&x===t);if(j>=0){used.add(j);if(t.length>=3)full++}else rest.push(t)}
+ for(const t of rest){if(t.length!==1)return false;const j=d.findIndex((x,k)=>!used.has(k)&&x[0]===t);if(j<0)return false;used.add(j)}
+ return full>=1}
+/* cocok bila nama dosen muncul utuh, terbalik ("Hartati Rika"), atau dengan inisial ("R. Hartati", "Hartati, R.") */
+function dosenMatch(D,T){const d=tokensOf(String(D.nama||"").split(",")[0]);if(!d.length)return false;
+ if(d.length===1)return d[0].length>=4&&T.includes(d[0]);
+ for(let w=2;w<=Math.max(2,d.length);w++)for(let i=0;i+w<=T.length;i++)if(winMatch(T.slice(i,i+w),d))return true;
+ return false}
 function sKey(e){const t=String((e.v||{}).judul||(e.v||{}).nama||"").toLowerCase().replace(/[^a-z0-9]/g,"");return t?e.sec+"|"+e.type+"|"+t:null}
-function syncEntry(e){const f=NAMEF[e.sec+"|"+e.type],made=[];if(!f)return made;
- const txt=normTxt(e.v[f]);if(txt.trim()==="")return made;
+function syncEntry(e,st){const f=NAMEF[e.sec+"|"+e.type],made=[];if(!f)return made;
+ const T=tokensOf(e.v[f]);if(!T.length)return made;
  const key=sKey(e);if(!e.g)e.g=uid();
- dosens.forEach(D=>{if(D.id===e.d)return;const core=namaInti(D.nama);
-  if(!core||core.split(" ").length<2||!txt.includes(" "+core+" "))return;
-  if((D.skip||[]).some(i=>i===e.g||(key&&i===key)))return;
-  if(entries.some(x=>x.d===D.id&&x.sec===e.sec&&x.type===e.type&&(x.g===e.g||(key&&sKey(x)===key))))return;
+ dosens.forEach(D=>{if(D.id===e.d||!dosenMatch(D,T))return;
+  if(st)st.match++;
+  if((D.skip||[]).some(i=>i===e.g||(key&&i===key))){if(st)st.skip++;return}
+  if(entries.some(x=>x.d===D.id&&x.sec===e.sec&&x.type===e.type&&(x.g===e.g||(key&&sKey(x)===key)))){if(st)st.ada++;return}
   const v={...e.v};delete v.peran; /* peranan bersifat pribadi, diisi sendiri oleh tiap dosen */
   entries.push({id:uid(),sec:e.sec,type:e.type,v,t:Date.now(),d:D.id,g:e.g});made.push(D.nama)});
  return made}
+/* periksa semua data penelitian/publikasi/pengabdian milik semua dosen; kembalikan jumlah salinan baru */
+function syncAll(st){let n=0;[...entries].forEach(e=>{if(NAMEF[e.sec+"|"+e.type]){if(st)st.cek++;n+=syncEntry(e,st).length}});return n}
 function tombstone(x){if(!NAMEF[x.sec+"|"+x.type])return;const D=dosens.find(d=>d.id===x.d);if(!D)return;
  const s=D.skip=D.skip||[];[x.g,sKey(x)].forEach(i=>{if(i&&!s.includes(i))s.push(i)})}
-$("bSync").onclick=()=>{let n=0;[...entries].forEach(e=>{n+=syncEntry(e).length});persist();refresh();
- toast(n?n+" salinan data dibuat di portofolio dosen lain.":"Semua data sudah sinkron; tidak ada yang perlu disalin.")};
+{const bs=$("bSync");if(bs)bs.onclick=()=>{const st={cek:0,match:0,skip:0,ada:0},n=syncAll(st);if(n){persist();refresh()}
+ alert("Hasil sinkronisasi\n\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+
+ (st.match===0?"\n\nTidak ada nama dosen terdaftar yang ditemukan di kolom Penulis/Penyusun/Tim. Pastikan nama dosen di menu Dosen sama dengan yang ditulis di data (boleh pakai inisial, misalnya \"R. Hartati\").\n\nDosen terdaftar: "+dosens.map(d=>d.nama).join("; "):""))}}
 
 /* ===== Tambah / ubah dosen ===== */
 const DEFV={vNama:"Dr. apt. Rika Hartati, S.Si., M.Si.",vNip:"19820814 201012 2 004",vJab:"Wakil Dekan Sumber Daya Manusia, Sekolah Farmasi"};
@@ -335,7 +349,7 @@ $("frmD").addEventListener("submit",ev=>{ev.preventDefault();const v={};DF.forEa
  if(!v.nama){toast("Nama dosen wajib diisi.");return}
  const wasEdit=!!editD;
  if(wasEdit){Object.assign(dosens.find(x=>x.id===editD),v)}else{const n={id:"d"+uid(),...v};dosens.push(n);cur=n.id}
- persist();refresh();$("dlgD").close();toast(wasEdit?"Data dosen diperbarui.":"Dosen ditambahkan dan dipilih.")});
+ const sn=syncAll();persist();refresh();$("dlgD").close();toast((wasEdit?"Data dosen diperbarui.":"Dosen ditambahkan dan dipilih.")+(sn?" "+sn+" data penelitian/pengabdian yang memuat nama ini disalin ke portofolionya.":""))});
 /* ===== Cetak / Simpan PDF (format Riwayat Hidup ITB) ===== */
 const BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const idDate=d=>d.getDate()+" "+BLN[d.getMonth()]+" "+d.getFullYear();
@@ -475,7 +489,7 @@ async function cloudPull(){
   const c=data.data||{},ds=new Map(dosens.map(x=>[x.id,x])),es=new Map(entries.map(x=>[x.id,x]));
   (c.dosen||[]).forEach(x=>ds.set(x.id,x));(c.entries||[]).forEach(x=>es.set(x.id,x));
   applyCloud({dosen:[...ds.values()],entries:[...es.values()],aktif:cur});await cloudPush();toast("Data perangkat dan database digabung.");return}
- applyCloud(data.data||{});lsSet(KSYNC,data.updated_at);cloudTxt("☁ Tersimpan");toast("Data dimuat dari database.")}
+ applyCloud(data.data||{});lsSet(KSYNC,data.updated_at);cloudTxt("☁ Tersimpan");toast("Data dimuat dari database.");if(syncAll()){persist();refresh()}}
 function renderAuth(){
  $("authInfo").textContent=!sb?"Belum dikonfigurasi: isi SUPABASE_URL dan SUPABASE_KEY di file index.html.":user?"Masuk sebagai "+user.email+". Perubahan otomatis tersimpan ke database.":"Masuk agar data tersimpan di database dan tidak hilang saat cache/cookies dihapus.";
  $("authFields").hidden=!sb||!!user;$("aIn").hidden=$("aUp").hidden=!sb||!!user;$("aOut").hidden=!user}
@@ -857,5 +871,7 @@ $("mGo").onclick=()=>{const o=mOpt();
  const r=terapkanMhs(mplan,o);$("dlgMhs").close();
  toast(r.bimb+" pembimbingan dan "+r.uji+" penguji ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 })();
+refresh();
+if(syncAll()){applying=true;persist();applying=false}
 refresh();
 </script></body></html>
