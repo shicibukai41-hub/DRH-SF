@@ -62,11 +62,16 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 .printbox{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.tglw{font-size:12px;color:var(--muted);font-weight:600;display:flex;flex-direction:column;gap:3px}.tglw input{padding:7px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
 @media print{#cloudBtn,#dlgAuth{display:none!important}}
 .improw{display:grid;grid-template-columns:minmax(170px,42%) 1fr;gap:10px;align-items:center;padding:5px 2px;border-bottom:1px solid var(--line)}.improw select{width:100%}
+.dlist{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:13px;background:#fff}
+.drow{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}.drow:last-child{border:0}.drow:hover{background:#f8fafc}.drow.on{background:var(--soft)}
+.dinfo{flex:1;min-width:0}.dinfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dinfo .label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow .av-s{flex:none}.drow .dbtn{margin:0;flex:none}
+@media(max-width:600px){.drow{flex-wrap:wrap}.drow .dbtn{width:100%}}
 </style></head><body>
 <header><div class="wrap hero"><div class="avatar">RH</div><div><h1 id="name"></h1><div class="sub" id="institution"></div><div id="nip"></div></div></div></header>
 <nav><div class="wrap nav" id="nav"></div></nav>
 <main class="wrap">
-<section id="dashboard" class="active"><h2>Dashboard</h2><div class="grid" id="metrics"></div><div class="card"><h3>Tentang MVP</h3><p>Website ini merupakan portofolio akademik lokal berbasis data Daftar Riwayat Hidup. Tidak ada data yang dibuat-buat; bagian yang belum tersedia tetap dapat dikembangkan.</p></div></section>
+<section id="dashboard" class="active"><h2>Dashboard</h2><div class="grid" id="metrics"></div><div class="card" id="dosenCard"></div><div class="card" id="recent"></div><div class="card"><h3>Tentang MVP</h3><p>Website ini merupakan portofolio akademik lokal berbasis data Daftar Riwayat Hidup. Tidak ada data yang dibuat-buat; bagian yang belum tersedia tetap dapat dikembangkan.</p></div></section>
 <section id="profile"><h2>Profil Akademik</h2><div class="card" id="profileCard"></div></section>
 <section id="career"><h2>Pendidikan & Karier</h2><div id="careerContent"></div></section>
 <section id="research"><h2>Penelitian & Publikasi</h2><div id="researchContent"></div></section>
@@ -181,12 +186,19 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36);
 /* ===== Header & navigasi (bawaan) ===== */
 const defs=[["dashboard","Dashboard"],["profile","Profil"],["career","Pendidikan & Karier"],["research","Penelitian & Publikasi"],["teaching","Pengajaran"],["community","Pengabdian"],["activities","Kegiatan Ilmiah"],["awards","Penghargaan & Jejaring"],["data","Data Excel"]];
 defs.forEach((d,i)=>{let b=document.createElement("button");b.textContent=d[1];b.onclick=()=>show(d[0]);if(!i)b.className="active";b.dataset.id=d[0];$("nav").appendChild(b)});
-function show(id){document.querySelectorAll("section").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.id===id));scrollTo(0,0)}
+let view="dashboard";
+function show(id){view=id;renderHeader();document.querySelectorAll("section").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.id===id));scrollTo(0,0)}
 const sheets=DATA.sheets;
 const ini=n=>{const w=String(n).split(",")[0].replace(/\b(dr|prof|apt|ir|drs|dra|h|hj)\.\s*/gi,"").trim().split(/\s+/).filter(Boolean);return((w[0]||"?")[0]+(w[1]?w[1][0]:"")).toUpperCase()};
 const where=(D,sep)=>[D.school,D.inst].filter(Boolean).join(sep);
-function renderHeader(){const D=curD();$("name").textContent=D.nama;$("institution").textContent=where(D," • ");$("nip").textContent=D.nip?"NIP: "+D.nip:"";document.querySelector(".avatar").textContent=ini(D.nama);document.title="Portofolio Akademik — "+D.nama;}
-function renderDosen(){$("dosenList").innerHTML=`<div class="dgrid">${dosens.map(x=>`<div class="card dcard${x.id===cur?" on":""}"><div class="av-s">${esc(ini(x.nama))}</div><h3>${esc(x.nama)}</h3><div class="label">${esc(where(x," • "))}</div>${x.nip?`<div class="label">NIP: ${esc(x.nip)}</div>`:""}<div class="dbtn">${x.id===cur?'<span class="tag">Sedang dilihat</span>':`<button class="btn sm" data-pick="${esc(x.id)}">Lihat portofolio</button>`}<button class="btn sm" data-editdosen="${esc(x.id)}">Ubah</button>${dosens.length>1?`<button class="btn sm danger" data-deldosen="${esc(x.id)}">Hapus</button>`:""}</div></div>`).join("")}</div>`}
+function renderHeader(){const D=curD();if(view==="dashboard"){$("name").textContent="Dashboard Seluruh Dosen";$("institution").textContent=dosens.length+" dosen terdaftar";$("nip").textContent="";document.querySelector(".avatar").textContent="Σ";document.title="Portofolio Akademik — Dashboard";return}$("name").textContent=D.nama;$("institution").textContent=where(D," • ");$("nip").textContent=D.nip?"NIP: "+D.nip:"";document.querySelector(".avatar").textContent=ini(D.nama);document.title="Portofolio Akademik — "+D.nama;}
+let dq="";
+$("dosenCard").innerHTML='<div class="card-head"><h3>Daftar Dosen<span class="count" id="dosenCount"></span></h3></div><input class="search" id="dosenSearch" placeholder="Cari nama, NIP, atau kelompok keahlian..." style="margin-bottom:10px"><div class="dlist" id="dosenRows"></div>';
+$("dosenSearch").addEventListener("input",e=>{dq=e.target.value;renderDosen()});
+function renderDosen(){const q=dq.trim().toLowerCase(),n=id=>entries.filter(e=>e.d===id).length;
+ const list=dosens.filter(x=>!q||[x.nama,x.nip,x.school,x.inst,x.kk].join(" ").toLowerCase().includes(q));
+ $("dosenCount").textContent=q?list.length+" / "+dosens.length:dosens.length;
+ $("dosenRows").innerHTML=list.length?list.map(x=>`<div class="drow${x.id===cur?" on":""}" data-pick="${esc(x.id)}"><div class="av-s">${esc(ini(x.nama))}</div><div class="dinfo"><b>${esc(x.nama)}</b><div class="label">${esc(where(x," • ")||"—")}${x.nip?" • NIP: "+esc(x.nip):""} • ${n(x.id)} data</div></div><div class="dbtn"><button class="btn sm" data-pick="${esc(x.id)}">Lihat profil</button><button class="btn sm" data-editdosen="${esc(x.id)}">Ubah</button>${dosens.length>1?`<button class="btn sm danger" data-deldosen="${esc(x.id)}">Hapus</button>`:""}</div></div>`).join(""):'<div class="empty" style="border:0">Tidak ada dosen yang cocok dengan pencarian.</div>'}
 const DRH=[["nama","Nama lengkap dan gelar"],["ttl","Tempat/tanggal lahir"],["nip","NIP/Nopeg"],["school","Fakultas/Sekolah"],["tmt","Tanggal pengangkatan sebagai dosen tetap ITB"],["kk","Kelompok Keahlian/Keilmuan"],["bidang","Bidang Keahlian sesuai peta jalan KK"],["sertNo","Sertifikat dosen profesional: Nomor"],["sertTgl","Sertifikat dosen profesional: Tanggal/tahun"],["jab","Jabatan Fungsional Saat Ini"],["jabUsul","Jabatan Fungsional yang Diusulkan"]];
 function renderDRH(){const D=curD();$("drhCard").innerHTML=`<div class="card-head"><h3>Data Diri (sesuai DRH)</h3><button class="btn sm" data-editdosen="${esc(D.id)}">Ubah</button></div><div class="table-wrap"><table><tbody>${DRH.map(([k,l])=>`<tr><th class="drh-l">${esc(l)}</th><td>${D[k]?cell(D[k]):'<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table></div>`}
 function renderProfile(){const D=curD(),tg=[D.kk,D.jab].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
@@ -195,12 +207,11 @@ function renderProfile(){const D=curD(),tg=[D.kk,D.jab].filter(Boolean).map(t=>`
 /* ===== Tombol "+ Tambah" di setiap menu ===== */
 ["dashboard",...SECS].forEach(id=>{const sec=$(id),h2=sec.querySelector("h2"),hd=document.createElement("div");hd.className="sec-head";h2.replaceWith(hd);hd.appendChild(h2);
  const b=document.createElement("button");b.className="btn primary";b.textContent="+ Tambah";b.dataset.add=id;hd.appendChild(b)});
-{const pb=$("profile").querySelector(".sec-head button");pb.textContent="+ Tambah Dosen";delete pb.dataset.add;pb.dataset.adddosen="1";$("profile").querySelector(".sec-head").insertAdjacentHTML("afterend",'<div id="dosenList"></div>');$("profileCard").insertAdjacentHTML("afterend",'<div class="card" id="drhCard"></div>')}
+{const db=$("dashboard").querySelector(".sec-head button");db.textContent="+ Tambah Dosen";delete db.dataset.add;db.dataset.adddosen="1";$("profileCard").insertAdjacentHTML("afterend",'<div class="card" id="drhCard"></div><div id="pDash"><h3 style="margin:22px 0 12px">Dashboard Dosen</h3><div class="grid" id="pMetrics"></div><div class="card" id="pRecent"></div></div>')}
 SECS.filter(s=>s!=="data").forEach(s=>{const d=document.createElement("div");d.id="e-"+s;const sec=$(s);if(s==="profile")sec.appendChild(d);else sec.querySelector(".sec-head").after(d)});
 {const hd=$("research").querySelector(".sec-head"),b=document.createElement("button");b.className="btn";b.id="bSortYr";hd.insertBefore(b,hd.querySelector("[data-add]"));
  const lab=()=>{b.textContent=yrDir<0?"Urut: tahun terbaru ↓":"Urut: tahun terlama ↑"};lab();
  b.onclick=()=>{yrDir=-yrDir;try{localStorage.setItem("portofolio-dosen:urut:v1",yrDir<0?"desc":"asc")}catch(_){}lab();refresh();toast(yrDir<0?"Diurutkan dari tahun terbaru.":"Diurutkan dari tahun terlama.")}}
-$("metrics").insertAdjacentHTML("afterend",'<div class="card" id="recent"></div>');
 $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-head"><h3>Cadangan Data</h3></div><p class="muted" style="margin-top:0">Simpan semua dosen beserta datanya ke file JSON, atau pulihkan dari file cadangan.</p><div class="toolbar" style="margin-bottom:0"><button class="btn" id="bExp">⬇ Ekspor JSON</button><button class="btn" id="bImp">⬆ Impor JSON</button><button class="btn" id="bSync" title="Salin data penelitian/pengabdian yang memuat nama dosen lain ke portofolio mereka">🔄 Sinkronkan nama tim ke semua dosen</button><button class="btn danger" id="bRst">Hapus data dosen ini</button><input type="file" id="fImp" accept="application/json,.json" hidden></div></div>');
 {const h2=$("data").querySelector("h2"),hd=document.createElement("div");hd.className="sec-head";h2.replaceWith(hd);hd.appendChild(h2);
  hd.insertAdjacentHTML("beforeend",'<div class="printbox"><label class="tglw">Tanggal pernyataan (bagian XIX)<input type="date" id="tglCetak" title="Kosongkan untuk memakai tanggal hari ini"></label><button class="btn primary" data-print="1">🖨 Cetak / Simpan PDF</button></div>');
@@ -224,11 +235,22 @@ function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
  const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${FS.map(f=>`<th>${esc(f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${FS.map(f=>`<td>${cell(e.v[f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
  return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></div>${tbl}</div>`}
 function renderSec(s){$("e-"+s).innerHTML=Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
-function renderMetrics(){const cnt=s=>mineE().filter(e=>e.sec===s).length;
- const items=[["Jumlah dosen",dosens.length,"profile"],["Total data dosen ini",mineE().length,""],...["profile","career","research","teaching","community","activities","awards"].map(s=>[CFG[s].label,cnt(s),s]),["Baris data sumber (DRH)",sheets.reduce((a,s)=>a+s.rows.length,0),"data"]];
- $("metrics").innerHTML=items.map(x=>`<div class="card"${x[2]?` data-go="${x[2]}"`:""}><div class="metric">${x[1]}</div><div class="label">${esc(x[0])}</div></div>`).join("")}
-function renderRecent(){const r=mineE().sort((a,b)=>b.t-a.t).slice(0,5);
- $("recent").innerHTML="<h3>Terakhir ditambahkan</h3>"+(r.length?`<ul class="recent">${r.map(e=>{const T=CFG[e.sec].types[e.type];return `<li><span class="tag">${esc(CFG[e.sec].label)}</span> <b>${esc(T.name)}</b> — ${esc(T.f.map(f=>e.v[f.k]).filter(Boolean).slice(0,2).join(" · ").slice(0,110))}</li>`}).join("")}</ul>`:`<div class="empty">Belum ada data. Klik “+ Tambah” untuk mulai mengisi. Data tersimpan di browser ini; gunakan Ekspor JSON di menu Data Excel untuk cadangan.</div>`)}
+const SECL=["profile","career","research","teaching","community","activities","awards"];
+const normV=v=>Object.keys(v||{}).filter(k=>k!=="peran").sort().map(k=>String(v[k]||"").toLowerCase().replace(/\s+/g," ").trim()).join("|");
+/* data dianggap sama bila jenis & isinya sama (salinan sinkron nama tim dihitung satu). Data pribadi (profil, karier, rekap) tetap dihitung per dosen. */
+function uKey(e){const nk=NAMEF[e.sec+"|"+e.type];if(nk){const k=sKey(e);if(k)return k}
+ const T=CFG[e.sec].types[e.type],own=e.sec==="profile"||e.sec==="career"||/^Rekap/.test(T.name);
+ return (own?e.d+"|":"")+e.sec+"|"+e.type+"|"+normV(e.v)}
+function uniqE(){const m=new Map();entries.forEach(e=>{const k=uKey(e),o=m.get(k);if(!o||(e.t||0)>(o.t||0))m.set(k,e)});return[...m.values()]}
+const cardsHTML=items=>items.map(x=>`<div class="card"${x[2]?` data-go="${x[2]}"`:""}><div class="metric">${x[1]}</div><div class="label">${esc(x[0])}</div></div>`).join("");
+function renderMetrics(){const u=uniqE(),cnt=s=>u.filter(e=>e.sec===s).length;
+ $("metrics").innerHTML=cardsHTML([["Jumlah dosen",dosens.length,""],["Total data semua dosen (tanpa duplikat)",u.length,""],...SECL.map(s=>[CFG[s].label,cnt(s),""]),["Baris data sumber (DRH)",sheets.reduce((a,s)=>a+s.rows.length,0),""]])}
+function renderPDash(){const m=mineE(),cnt=s=>m.filter(e=>e.sec===s).length;
+ $("pMetrics").innerHTML=cardsHTML([["Total data dosen ini",m.length,""],...SECL.map(s=>[CFG[s].label,cnt(s),s]),...(cur==="d0"?[["Baris data sumber (DRH)",sheets.reduce((a,s)=>a+s.rows.length,0),"data"]]:[])]);
+ $("pRecent").innerHTML=recentHTML(m,false)}
+function recentHTML(list,own){const r=list.slice().sort((a,b)=>(b.t||0)-(a.t||0)).slice(0,5);
+ return "<h3>Terakhir ditambahkan</h3>"+(r.length?`<ul class="recent">${r.map(e=>{const T=CFG[e.sec].types[e.type],D=own?dosens.find(x=>x.id===e.d):null;return `<li><span class="tag">${esc(CFG[e.sec].label)}</span> <b>${esc(T.name)}</b> — ${esc(T.f.map(f=>e.v[f.k]).filter(Boolean).slice(0,2).join(" · ").slice(0,110))}${D?` <span class="muted">· ${esc(D.nama)}</span>`:""}</li>`}).join("")}</ul>`:`<div class="empty">Belum ada data. Klik “+ Tambah” pada menu dosen untuk mulai mengisi. Data tersimpan di browser ini; gunakan Ekspor JSON di menu Profil untuk cadangan.</div>`)}
+function renderRecent(){$("recent").innerHTML=recentHTML(uniqE(),true)}
 
 /* Data sumber Excel (bawaan) */
 function sheetHTML(s){let max=Math.max(...s.rows.map(r=>r.length));let head=s.rows[0]||[];return `<div class="card"><h3>${esc(s.name)}</h3><div class="table-wrap"><table><thead><tr>${Array.from({length:max},(_,i)=>`<th>${esc(head[i]||"Kolom "+(i+1))}</th>`).join("")}</tr></thead><tbody>${s.rows.slice(1).map(r=>`<tr>${Array.from({length:max},(_,i)=>`<td>${esc(r[i]||"")}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`}
@@ -238,7 +260,7 @@ const all=sheets.flatMap(s=>s.rows.map(r=>({s:s.name,r:r})));
 function renderSearch(){const q=($("search").value||"").toLowerCase();
  const src=all.filter(x=>x.s.toLowerCase().includes(q)||x.r.join(" ").toLowerCase().includes(q)).slice(0,500);
  $("dataContent").innerHTML=src.length?`<div class="table-wrap"><table><thead><tr><th>Sheet</th><th>Isi</th></tr></thead><tbody>${src.map(x=>`<tr><td>${esc(x.s)}</td><td>${x.r.map(esc).filter(Boolean).join(" · ")}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">Tidak ditemukan.</div>'}
-function refresh(){const tc=$("tglCetak");if(tc)tc.value=curD().tgl||"";renderHeader();renderDosen();renderProfile();renderDRH();renderSources();renderMetrics();renderRecent();SECS.filter(s=>s!=="data").forEach(renderSec);renderSearch()}
+function refresh(){const tc=$("tglCetak");if(tc)tc.value=curD().tgl||"";renderHeader();renderDosen();renderProfile();renderDRH();renderSources();renderMetrics();renderRecent();renderPDash();SECS.filter(s=>s!=="data").forEach(renderSec);renderSearch()}
 
 /* ===== Form tambah / ubah ===== */
 function buildFields(val,v){const [s,k]=val.split("|"),T=CFG[s].types[k];
@@ -276,7 +298,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("[data-add],[data
  if(t.dataset.pg){pg[t.dataset.pg]=+t.dataset.p;renderSec(t.dataset.pg.split("|")[0]);return}
  if(t.dataset.adddosen)openDosen();
  else if(t.dataset.editdosen)openDosen(t.dataset.editdosen);
- else if(t.dataset.pick){cur=t.dataset.pick;pg={};persist();refresh();show("dashboard")}
+ else if(t.dataset.pick){cur=t.dataset.pick;pg={};persist();refresh();show("profile")}
  else if(t.dataset.deldosen){const D=dosens.find(x=>x.id===t.dataset.deldosen);if(D&&dosens.length>1&&confirm("Hapus dosen \""+D.nama+"\" beserta semua datanya?")){dosens=dosens.filter(x=>x.id!==D.id);entries=entries.filter(x=>x.d!==D.id);if(cur===D.id)cur=dosens[0].id;persist();refresh();toast("Dosen dihapus.")}}
  else if(t.dataset.add)openForm(t.dataset.add,t.dataset.type);
  else if(t.dataset.edit)openForm(null,null,t.dataset.edit);
@@ -349,7 +371,7 @@ $("frmD").addEventListener("submit",ev=>{ev.preventDefault();const v={};DF.forEa
  if(!v.nama){toast("Nama dosen wajib diisi.");return}
  const wasEdit=!!editD;
  if(wasEdit){Object.assign(dosens.find(x=>x.id===editD),v)}else{const n={id:"d"+uid(),...v};dosens.push(n);cur=n.id}
- const sn=syncAll();persist();refresh();$("dlgD").close();toast((wasEdit?"Data dosen diperbarui.":"Dosen ditambahkan dan dipilih.")+(sn?" "+sn+" data penelitian/pengabdian yang memuat nama ini disalin ke portofolionya.":""))});
+ const sn=syncAll();persist();refresh();$("dlgD").close();if(!wasEdit)show("profile");toast((wasEdit?"Data dosen diperbarui.":"Dosen ditambahkan dan dipilih.")+(sn?" "+sn+" data penelitian/pengabdian yang memuat nama ini disalin ke portofolionya.":""))});
 /* ===== Cetak / Simpan PDF (format Riwayat Hidup ITB) ===== */
 const BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const idDate=d=>d.getDate()+" "+BLN[d.getMonth()]+" "+d.getFullYear();
