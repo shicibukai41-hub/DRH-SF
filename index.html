@@ -103,7 +103,10 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 </form></dialog>
 <dialog id="dlgImp" style="width:min(900px,96vw)"><form id="frmImp" method="dialog">
 <h3>Impor mata kuliah dari file SK (PDF / Excel)</h3><div class="dsub" id="impInfo"></div>
-<label>Semester/Tahun yang dicatat<input id="impSem" placeholder="mis. Semester I 2021/2022"></label>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+<label>Periode<select id="impPer"><option value="Sejak kenaikan jabatan terakhir" selected>Sejak kenaikan jabatan terakhir</option><option value="Sejak menjadi dosen">Sejak menjadi dosen</option></select></label>
+<label>Semester/Tahun yang dicatat<input id="impSem" placeholder="mis. Semester I 2021/2022"></label></div>
+<div class="muted" id="impPerNote" style="margin-top:6px"></div>
 <div class="toolbar" style="margin:12px 0 6px;align-items:center"><span class="muted">Dosen yang belum cocok dengan profil:</span><button type="button" class="btn sm" id="impSkip">Semua lewati</button><button type="button" class="btn sm" id="impNew">Semua buat profil baru</button></div>
 <div id="impList" style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
 <div class="muted" id="impSum" style="margin-top:8px"></div>
@@ -785,7 +788,7 @@ function cocok(nama){const n=normNama(nama);if(!n)return null;
  if(t.length>=2){const c=dosens.filter(d=>{const u=normNama(d.nama).split(" ");return u.length>=2&&(t.every(w=>u.includes(w))||u.every(w=>t.includes(w)))});if(c.length===1)return c[0]}
  return null}
 function rencana(dosenPdf){return dosenPdf.map(p=>{const seen=new Map();
-  p.matakuliah.forEach(m=>{const key=m.kode||bersih(m.nama);if(key&&!seen.has(key))seen.set(key,{kode:m.kode||"",nama:bersih(m.nama),sem:m.sem||"",jenjang:m.jenjang||"",fak:m.fak||""})});   // beberapa kelas = satu matakuliah
+  p.matakuliah.forEach(m=>{const key=(m.sem||"")+"|"+(m.kode||bersih(m.nama));if(m.kode||m.nama)if(!seen.has(key))seen.set(key,{kode:m.kode||"",nama:bersih(m.nama),sem:m.sem||"",jenjang:m.jenjang||"",fak:m.fak||""})});   // beberapa kelas = satu matakuliah
   const h=cocok(p.nama);return{nama:p.nama,mk:[...seen.values()],target:h?h.id:"",cocok:!!h}})
   .filter(r=>r.mk.length).sort((a,b)=>b.cocok-a.cocok)}
 function semesterDari(pages,namaFile){
@@ -794,15 +797,18 @@ function semesterDari(pages,namaFile){
  if(m)return"Semester "+m[1].toUpperCase()+" "+m[2]+"/"+m[3];
  m=String(namaFile||"").match(/(\d{4})\D+(\d{4}).*?sem\w*\D*(\d|[ivx]+)/i);
  return m?"Semester "+m[3].toUpperCase()+" "+m[1]+"/"+m[2]:""}
-function terapkan(plan,sem){
+function terapkan(plan,sem,periode){
+ const awal=periode==="Sejak menjadi dosen";   // sejak menjadi dosen: satu baris per matakuliah (tanpa semester); kenaikan jabatan: per semester
  let tambah=0,lewat=0,baru=0;
  plan.forEach(r=>{if(r.target==="")return;
   let id=r.target;
   if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
-  const ada=new Set();entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk").forEach(e=>{const sm=e.v.sem||"",mk=String(e.v.mk||"");ada.add(sm+"|"+mk.split(" ")[0]);ada.add(sm+"|"+mk)});
-  r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=sm+"|"+(m.kode||label);
+  const ada=new Set();
+  entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk"&&((e.v.periode==="Sejak menjadi dosen")===awal)).forEach(e=>{
+   const aw=awal?"":(e.v.sem||""),mk=String(e.v.mk||"");ada.add(aw+"|"+mk.split(" ")[0]);ada.add(aw+"|"+mk)});
+  r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=(awal?"":sm)+"|"+(m.kode||label);
    if(ada.has(key)){lewat++;return}ada.add(key);
-   const v={mk:label,sem:sm};if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
+   const v={mk:label,periode:periode};if(!awal)v.sem=sm;if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
    entries.push({id:uid(),sec:"teaching",type:"mk",v:v,t:Date.now(),d:id});tambah++})});
  persist();refresh();return{tambah,lewat,baru}}
 window.imporSK={parseSK,rencana,semesterDari,terapkan,parseMahasiswa,rencanaMhs,terapkanMhs,bukaMhs};
@@ -876,7 +882,7 @@ async function imporExcel(f){
   const semAda=plan.every(r=>r.mk.every(m=>m.sem));
   $("impSem").value=semAda?"":semesterDari([],f.name);
   $("impInfo").textContent=f.name+" \u2014 "+plan.length+" dosen terbaca"+(tanpa?" (kolom dosen tidak ada, dianggap milik "+aktif.nama+")":"")+". "+(semAda?"Semester diambil dari kolom Excel.":"Isi Semester/Tahun untuk baris yang belum punya semester.")+(mhObj?" Data mahasiswa di file ini akan diproses setelah mata kuliah.":"");
-  gambar();$("dlgImp").showModal()
+  $("impPer").value="Sejak kenaikan jabatan terakhir";gambar();$("dlgImp").showModal()
  }catch(err){toast("Gagal membaca Excel: "+err.message)}}
 function templateXlsx(){
  if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
@@ -891,7 +897,10 @@ function templateXlsx(){
 let plan=[];
 const opsi=t=>'<option value=""'+(t===""?" selected":"")+'>Lewati</option><option value="__new"'+(t==="__new"?" selected":"")+'>+ Buat profil baru</option>'+dosens.map(d=>'<option value="'+esc(d.id)+'"'+(t===d.id?" selected":"")+'>'+esc(d.nama)+'</option>').join("");
 function ringkas(){const a=plan.filter(r=>r.target!=="");
- $("impSum").textContent=a.length+" dosen dipilih, "+a.reduce((s,r)=>s+r.mk.length,0)+" matakuliah akan ditambahkan (matakuliah yang sudah ada di semester yang sama dilewati)."}
+ $("impSum").textContent=a.length+" dosen dipilih, "+a.reduce((s,r)=>s+r.mk.length,0)+" matakuliah akan ditambahkan (duplikat dilewati sesuai periode)."
+ const aw=$("impPer").value==="Sejak menjadi dosen";
+ $("impPerNote").textContent=aw?"Sejak menjadi dosen: matakuliah yang sama hanya dicatat sekali, jadi dilewati jika sudah ada di semester mana pun. Semester tidak dicatat.":"Sejak kenaikan jabatan terakhir: matakuliah yang sama tetap ditambahkan untuk semester baru; hanya dilewati jika sudah ada di semester yang sama."}
+$("impPer").onchange=()=>ringkas();
 function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div><b>'+esc(r.nama)+'</b> <span class="muted">— '+r.mk.length+' matakuliah'+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>').join("");ringkas()}
 {const h=$("teaching").querySelector("h2");
  h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPdf">\ud83d\udcc4 Impor dari PDF atau Excel (matakuliah, pembimbingan, penguji)</button><button class="btn" id="bTpl" title="Unduh contoh format Excel untuk impor">\u2b07 Template Excel</button><input type="file" id="fPdf" accept="application/pdf,.pdf,.xlsx,.xls,.xlsm,.csv" hidden></div>')}
@@ -913,16 +922,16 @@ $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)r
   plan=rencana(ds);
   $("impSem").value=semesterDari(pages,f.name);
   $("impInfo").textContent=f.name+" — "+ds.length+" dosen terbaca. Pilih profil tujuan untuk tiap dosen.";
-  gambar();$("dlgImp").showModal()
+  $("impPer").value="Sejak kenaikan jabatan terakhir";gambar();$("dlgImp").showModal()
  }catch(err){toast("Gagal membaca PDF: "+err.message)}};
 $("impList").addEventListener("change",e=>{const s=e.target.closest("select");if(!s)return;plan[+s.dataset.i].target=s.value;ringkas()});
 $("impSkip").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target=""});gambar()};
 $("impNew").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target="__new"});gambar()};
 $("impCancel").onclick=()=>{pendingMhs=null;$("dlgImp").close()};
-$("impGo").onclick=()=>{const sem=$("impSem").value.trim();
- if(!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
+$("impGo").onclick=()=>{const sem=$("impSem").value.trim(),per=$("impPer").value;
+ if(per!=="Sejak menjadi dosen"&&!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
  if(!plan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
- const r=terapkan(plan,sem);$("dlgImp").close();if(pendingMhs){const pm=pendingMhs;pendingMhs=null;setTimeout(()=>bukaMhs(pm.mh,pm.nama),0)}
+ const r=terapkan(plan,sem,per);$("dlgImp").close();if(pendingMhs){const pm=pendingMhs;pendingMhs=null;setTimeout(()=>bukaMhs(pm.mh,pm.nama),0)}
  toast(r.tambah+" matakuliah ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 
 /* --- impor pembimbingan & penguji mahasiswa --- */
