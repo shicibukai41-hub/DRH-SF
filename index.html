@@ -34,6 +34,7 @@ dialog label{display:block;font-size:13px;color:var(--muted);font-weight:600}
 dialog input,dialog select,dialog textarea{width:100%;margin-top:5px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;color:var(--ink);background:#fff}
 dialog input:focus,dialog select:focus,dialog textarea:focus{outline:2px solid #c7d7f5;border-color:var(--blue)}
 .ff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.ff .wide{grid-column:1/-1}.dact{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.dup{margin-top:14px;padding:10px 12px;border:1px solid #fecdca;background:#fef3f2;color:#b42318;border-radius:10px;font-size:13px;line-height:1.45}.dup b{display:block;margin-bottom:2px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);background:#172033;color:#fff;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:90vw;text-align:center}.toast.show{opacity:1;transform:translateX(-50%)}
 @media(max-width:600px){.ff{grid-template-columns:1fr}}
 .hero{flex-wrap:wrap}select.dsel{margin-left:auto;background:#ffffff22;color:#fff;border:1px solid #ffffff66;border-radius:10px;padding:9px 12px;font:inherit;max-width:100%}select.dsel option{color:#172033}
@@ -82,7 +83,7 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 <section id="data"><h2>Data Sumber Excel</h2><input class="search" id="search" placeholder="Cari data..."><div id="dataContent"></div></section>
 </main><footer>Portofolio Akademik • MVP lokal</footer>
 <dialog id="dlg"><form id="frm"><h3 id="dTitle">Tambah data</h3><div class="dsub" id="dSub"></div>
-<label id="dTypeWrap">Jenis data<select id="dType"></select></label><div class="ff" id="dFields"></div>
+<label id="dTypeWrap">Jenis data<select id="dType"></select></label><div class="ff" id="dFields"></div><div class="dup" id="dDup" role="alert" hidden></div>
 <div class="dact"><button type="button" class="btn" id="dCancel">Batal</button><button type="submit" class="btn primary">Simpan</button></div></form></dialog>
 <dialog id="dlgD"><form id="frmD"><h3 id="dtTitle">Tambah dosen</h3><div class="dsub" id="dtSub"></div>
 <div class="ff" id="dFF"></div>
@@ -283,18 +284,21 @@ function openForm(sec,type,id){let cur=null;editId=id||null;
  $("dTitle").textContent=id?"Ubah data":"Tambah data";
  $("dSub").textContent=sec==="dashboard"?"Pilih jenis data, lalu isi kolom yang tersedia.":CFG[sec].label;
  buildFields(sel.value,cur?cur.v:{});
- $("dlg").showModal();setTimeout(()=>{const f=document.querySelector("#dFields input,#dFields select,#dFields textarea");f&&f.focus()},30)}
-$("dType").addEventListener("change",()=>buildFields($("dType").value,{}));
+ $("dDup").hidden=true;$("dlg").showModal();setTimeout(()=>{const f=document.querySelector("#dFields input,#dFields select,#dFields textarea");f&&f.focus()},30)}
+$("dType").addEventListener("change",()=>{buildFields($("dType").value,{});$("dDup").hidden=true});
+$("dFields").addEventListener("input",()=>{$("dDup").hidden=true});
 $("dCancel").onclick=()=>$("dlg").close();
 $("dlg").addEventListener("click",e=>{if(e.target===$("dlg"))$("dlg").close()});
 $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  const [s,k]=$("dType").value.split("|"),v={};let any=false;
  document.querySelectorAll("#dFields [data-k]").forEach(el=>{const x=el.value.trim();v[el.dataset.k]=x;if(x)any=true});
  if(!any){toast("Isi minimal satu kolom.");return}
- const wasEdit=!!editId;
+ const wasEdit=!!editId,dd=$("dDup"),dup=findDup(s,k,v,cur,editId);
+ if(dup){const jd=dup.v.judul||"data yang sama";dd.innerHTML="<b>Data sudah ada</b>\u201c"+esc(jd)+"\u201d sudah tercatat di portofolio "+esc(curD().nama)+". Setiap dosen hanya memiliki 1 data yang sama, jadi data ini tidak disimpan ganda. Ubah data yang sudah ada jika perlu.";dd.hidden=false;toast("Data sudah ada di portofolio "+curD().nama+".");return}
+ dd.hidden=true;
  let saved;if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){e.v=v;saved=e}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
- const sy=saved?syncEntry(saved):[];
- persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":""));
+ const sst={cek:0,match:0,skip:0,ada:0},sy=saved?syncEntry(saved,sst):[];
+ persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
  if(!wasEdit&&ctxSec==="dashboard")show(s)});
 
 /* ===== Aksi: hapus, ekspor, impor, reset ===== */
@@ -314,9 +318,24 @@ $("fImp").onchange=e=>{const f=e.target.files[0];if(!f)return;
  f.text().then(t=>{const j=JSON.parse(t),arr=(Array.isArray(j)?j:j.entries)||[],dl=Array.isArray(j.dosen)?j.dosen.filter(validD):[];
   const hd=new Set(dosens.map(x=>x.id)),nd=dl.filter(x=>!hd.has(x.id));dosens=dosens.concat(nd);
   const have=new Set(entries.map(x=>x.id)),ids=new Set(dosens.map(x=>x.id));
-  const add=arr.filter(validE).filter(x=>!have.has(x.id)).map(x=>({...x,d:ids.has(x.d)?x.d:cur}));entries=entries.concat(add);persist();refresh();toast(nd.length+" dosen dan "+add.length+" data berhasil diimpor.")})
+  const add=arr.filter(validE).filter(x=>!have.has(x.id)).map(x=>({...x,d:ids.has(x.d)?x.d:cur}));entries=entries.concat(add);const dn=dedupeResearch();persist();refresh();toast(nd.length+" dosen dan "+(add.length-dn)+" data berhasil diimpor."+(dn?" "+dn+" data penelitian/publikasi sudah ada (tidak digandakan).":""))})
  .catch(()=>toast("File tidak valid.")).finally(()=>{e.target.value=""})};
 $("bRst").onclick=()=>{if(mineE().length&&confirm("Hapus SEMUA data tambahan milik "+curD().nama+"? Data dosen lain dan sumber Excel tidak ikut terhapus.")){mineE().forEach(tombstone);entries=entries.filter(x=>x.d!==cur);persist();refresh();toast("Data dosen ini dihapus.")}};
+/* ===== Anti-duplikat menu Penelitian & Publikasi: setiap dosen hanya punya 1 data yang sama =====
+   Kunci duplikat = jenis data + judul (huruf/angka saja, tanpa spasi/tanda baca/kapitalisasi). Berlaku untuk input manual,
+   sinkron antar dosen, impor JSON, dan data dari database. */
+const RTYPES=new Set(["pub","buku","hibah","karya"]);
+const normT=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+function dupKeyOf(sec,type,v){if(sec!=="research"||!RTYPES.has(type))return null;v=v||{};const t=normT(v.judul);
+ if(t)return "research|"+type+"|"+t;const f=normV(v);return f.replace(/\|/g,"")?"research|"+type+"|~"+f:null}
+function findDup(sec,type,v,d,skipId){const k=dupKeyOf(sec,type,v);if(!k)return null;
+ return entries.find(x=>x.d===d&&x.id!==skipId&&x.sec===sec&&x.type===type&&dupKeyOf(x.sec,x.type,x.v)===k)||null}
+/* gabungkan data ganda yang sudah telanjur ada (isi kolom kosong dilengkapi dari salinannya); kembalikan jumlah yang dibuang */
+function dedupeResearch(){let n=0;const seen=new Map();
+ entries=entries.filter(e=>{const k=dupKeyOf(e.sec,e.type,e.v);if(!k)return true;const id=e.d+"|"+k,o=seen.get(id);
+  if(!o){seen.set(id,e);return true}
+  Object.keys(e.v).forEach(f=>{if(!o.v[f]&&e.v[f])o.v[f]=e.v[f]});if(!o.g&&e.g)o.g=e.g;n++;return false});
+ return n}
 /* ===== Sinkron otomatis nama penulis/penyusun/tim ke portofolio dosen lain =====
    Setiap dosen mendapat SALINAN MANDIRI (id sendiri). Menghapus salinan hanya menghapus di portofolio dosen itu.
    Hapusan dicatat di dosen.skip agar tidak dibuat ulang saat sinkron berikutnya. */
@@ -338,11 +357,11 @@ function dosenMatch(D,T){const d=tokensOf(String(D.nama||"").split(",")[0]);if(!
 function sKey(e){const t=String((e.v||{}).judul||(e.v||{}).nama||"").toLowerCase().replace(/[^a-z0-9]/g,"");return t?e.sec+"|"+e.type+"|"+t:null}
 function syncEntry(e,st){const f=NAMEF[e.sec+"|"+e.type],made=[];if(!f)return made;
  const T=tokensOf(e.v[f]);if(!T.length)return made;
- const key=sKey(e);if(!e.g)e.g=uid();
+ const key=sKey(e),dk=dupKeyOf(e.sec,e.type,e.v);if(!e.g)e.g=uid();
  dosens.forEach(D=>{if(D.id===e.d||!dosenMatch(D,T))return;
   if(st)st.match++;
   if((D.skip||[]).some(i=>i===e.g||(key&&i===key))){if(st)st.skip++;return}
-  if(entries.some(x=>x.d===D.id&&x.sec===e.sec&&x.type===e.type&&(x.g===e.g||(key&&sKey(x)===key)))){if(st)st.ada++;return}
+  if(entries.some(x=>x.d===D.id&&x.sec===e.sec&&x.type===e.type&&(x.g===e.g||(key&&sKey(x)===key)||(dk&&dupKeyOf(x.sec,x.type,x.v)===dk)))){if(st){st.ada++;(st.dups=st.dups||[]).push(D.nama)}return}
   const v={...e.v};delete v.peran; /* peranan bersifat pribadi, diisi sendiri oleh tiap dosen */
   entries.push({id:uid(),sec:e.sec,type:e.type,v,t:Date.now(),d:D.id,g:e.g});made.push(D.nama)});
  return made}
@@ -351,7 +370,7 @@ function syncAll(st){let n=0;[...entries].forEach(e=>{if(NAMEF[e.sec+"|"+e.type]
 function tombstone(x){if(!NAMEF[x.sec+"|"+x.type])return;const D=dosens.find(d=>d.id===x.d);if(!D)return;
  const s=D.skip=D.skip||[];[x.g,sKey(x)].forEach(i=>{if(i&&!s.includes(i))s.push(i)})}
 {const bs=$("bSync");if(bs)bs.onclick=()=>{const st={cek:0,match:0,skip:0,ada:0},n=syncAll(st);if(n){persist();refresh()}
- alert("Hasil sinkronisasi\n\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+
+ alert("Hasil sinkronisasi\n\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+(st.dups&&st.dups.length?"\n\nDATA SUDAH ADA (tidak digandakan) di: "+[...new Set(st.dups)].join("; "):"")+
  (st.match===0?"\n\nTidak ada nama dosen terdaftar yang ditemukan di kolom Penulis/Penyusun/Tim. Pastikan nama dosen di menu Dosen sama dengan yang ditulis di data (boleh pakai inisial, misalnya \"R. Hartati\").\n\nDosen terdaftar: "+dosens.map(d=>d.nama).join("; "):""))}}
 
 /* ===== Tambah / ubah dosen ===== */
@@ -505,7 +524,7 @@ function applyCloud(d){
  dosens=dl.length?dl:[BASE];
  entries=(Array.isArray(d.entries)?d.entries:[]).filter(validE);
  cur=dosens.some(x=>x.id===d.aktif)?d.aktif:dosens[0].id;
- entries=entries.filter(e=>dosens.some(x=>x.id===(e.d=e.d||"d0")));
+ entries=entries.filter(e=>dosens.some(x=>x.id===(e.d=e.d||"d0")));dedupeResearch();
  applying=true;persist();applying=false;refresh()}
 async function cloudPull(){
  cloudTxt("☁ Memuat…");
@@ -994,6 +1013,6 @@ $("mGo").onclick=()=>{const o=mOpt();
  toast(r.bimb+" pembimbingan dan "+r.uji+" penguji ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 })();
 refresh();
-if(syncAll()){applying=true;persist();applying=false}
-refresh();
+{const dd=dedupeResearch();if(syncAll()||dd){applying=true;persist();applying=false}
+refresh();if(dd)toast(dd+" data penelitian/publikasi ganda digabung menjadi 1.")}
 </script></body></html>
