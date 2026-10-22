@@ -112,6 +112,14 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 <div id="impList" style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
 <div class="muted" id="impSum" style="margin-top:8px"></div>
 <div class="dact"><button type="button" class="btn" id="impCancel">Batal</button><button type="button" class="btn primary" id="impGo">Impor</button></div></form></dialog>
+<dialog id="dlgPub" style="width:min(900px,96vw)"><form method="dialog" onsubmit="return false">
+<h3>Impor Publikasi Jurnal dari Excel</h3><div class="dsub" id="pbInfo"></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+<label>Kategori publikasi<select id="pbKat"></select></label>
+<label>Peranan (jika kolom Peranan tidak ada di Excel)<input id="pbPeran" placeholder="mis. Penulis pertama / Corresponding author"></label></div>
+<div class="muted" id="pbSum" style="margin:10px 0 6px"></div>
+<div id="pbList" style="max-height:42vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px;font-size:13px"></div>
+<div class="dact"><button type="button" class="btn" id="pbCancel">Batal</button><button type="button" class="btn primary" id="pbGo">Impor data baru</button></div></form></dialog>
 <dialog id="dlgMhs" style="width:min(900px,96vw)"><form id="frmMhs" method="dialog">
 <h3>Impor pembimbingan &amp; penguji mahasiswa dari file SK (PDF / Excel)</h3><div class="dsub" id="mInfo"></div>
 <div style="display:grid;gap:6px;margin:10px 0">
@@ -928,6 +936,90 @@ function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><s
  h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPdf">\ud83d\udcc4 Impor dari PDF atau Excel (matakuliah, pembimbingan, penguji)</button><button class="btn" id="bTpl" title="Unduh contoh format Excel untuk impor">\u2b07 Template Excel</button><input type="file" id="fPdf" accept="application/pdf,.pdf,.xlsx,.xls,.xlsm,.csv" hidden></div>')}
 $("bPdf").onclick=()=>$("fPdf").click();
 $("bTpl").onclick=templateXlsx;
+
+/* ===== Impor Publikasi Jurnal dari Excel (menu Penelitian & Publikasi) =====
+   Kolom dikenali dari judul kolom (mis. ekspor Scopus + SJR). Data yang sudah ada di portofolio dosen dilewati. */
+let pbPlan=null;
+function tipePub(h){const t=kunci(h);if(!t)return"";
+ if(/^(title|document title|article title|judul|judul artikel|judul publikasi)$/.test(t))return"judul";
+ if(/^(authors|author s|author names|penulis|nama penulis|nama penulis artikel)$/.test(t))return"penulis";
+ if(/^author full names$/.test(t))return"penulis2";
+ if(/^(source title|journal|journal title|nama jurnal|jurnal|publication name|nama sumber)$/.test(t))return"source";
+ if(/^(volume|vol)$/.test(t))return"volume";
+ if(/^(issue|no|nomor|number|issue number)$/.test(t))return"issue";
+ if(/^(year|tahun|tahun terbit|publication year)$/.test(t))return"tahun";
+ if(/^(publisher|penerbit)$/.test(t))return"publisher";
+ if(/^(issn|e issn|eissn|print issn)$/.test(t))return"issn";
+ if(/^(quartile|best quartile|sjr best quartile|sjr quartile|kuartil|kuartile)$/.test(t))return"quartile";
+ if(/^(sjr|sjr score|sjr value)$/.test(t))return"sjr";
+ if(/^doi$/.test(t))return"doi";
+ if(/^(link|url|tautan|bukti|bukti dokumen)$/.test(t))return"link";
+ if(/^(peran|peranan|role|sebagai)$/.test(t))return"peran";
+ if(/^(kategori|kategori publikasi)$/.test(t))return"kat";
+ return""}
+/* ISSN dari Excel sering tampil sebagai angka tanpa nol di depan (mis. 9741496 = 0974-1496), jadi dilengkapi nol sampai 8 karakter */
+const pbFmtIssn=x=>{const a=sel(x).split(/[,;\/ ]+/).map(z=>z.replace(/[^0-9xX]/g,"").toUpperCase()).filter(z=>z.length>=4&&z.length<=8).map(z=>z.padStart(8,"0")).map(z=>z.slice(0,4)+"-"+z.slice(4));return[...new Set(a)].join(", ")};
+function pbBangun(r){   /* r: nilai per tipe kolom -> isian form Publikasi Jurnal */
+ const g=k=>sel(r[k]),src=g("source"),pub=g("publisher"),vol=g("volume"),iss=g("issue"),th=g("tahun"),issn=pbFmtIssn(r.issn||""),q=g("quartile"),sjr=g("sjr");
+ const pb2=src&&pub.toLowerCase().startsWith(src.toLowerCase())?"":pub,nama=src+(pb2?(src?" (":"")+pb2+(src?")":""):"");
+ const vt=vol&&th?"Vol. "+vol+"/"+th:vol?"Vol. "+vol:th;
+ const rank=q&&sjr?q+" (SJR "+sjr+")":q?q:sjr?"SJR "+sjr:"";
+ const jurnal=[nama,iss?"No. "+iss:"",vt,issn?"ISSN "+issn:"",rank].filter(Boolean).join("; ");
+ const doi=g("doi").replace(/^https?:\/\/(dx\.)?doi\.org\//i,""),lk=g("link");
+ const bukti=lk&&/^https?:\/\//i.test(lk)?lk:doi?"https://doi.org/"+doi:lk;
+ const pen=sel(r.penulis||r.penulis2||"").replace(/\s*\(\d{6,}\)/g,"").replace(/\s*;\s*/g,", ");
+ return{penulis:pen,judul:g("judul"),tahun:th,jurnal,bukti,peran:g("peran"),kat:g("kat")}}
+function pbBaca(wb){const out=[];
+ wb.SheetNames.forEach(n=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""});
+  let hi=-1,map=null;
+  for(let i=0;i<Math.min(rows.length,15);i++){const m={};rows[i].forEach((h,c)=>{const t=tipePub(h);if(t&&m[t]==null)m[t]=c});
+   if(m.judul!=null&&(m.source!=null||m.issn!=null)){hi=i;map=m;break}}
+  if(hi<0)return;
+  for(let i=hi+1;i<rows.length;i++){const r={};Object.keys(map).forEach(k=>r[k]=rows[i][map[k]]);
+   if(!sel(r.judul))continue;out.push(pbBangun(r))}});
+ return out}
+function pbGambar(){
+ const kat=$("pbKat").value,per=$("pbPeran").value.trim();
+ const D=curD(),seen=new Set();let baru=0,ada=0,dalam=0;
+ pbPlan.items.forEach(it=>{const v=Object.assign({},it.v,{kat:it.v.kat||kat,peran:it.v.peran||per});it.fin=v;
+  const k=dupKeyOf("research","pub",v);
+  if(findDup("research","pub",v,cur,null)){it.st="ada";ada++}
+  else if(k&&seen.has(k)){it.st="dalam";dalam++}
+  else{it.st="baru";baru++;if(k)seen.add(k)}});
+ pbPlan.baru=baru;
+ $("pbSum").innerHTML="<b>"+baru+"</b> data baru akan diimpor ke <b>"+esc(D.nama)+"</b> \u2022 <b>"+ada+"</b> sudah ada (dilewati)"+(dalam?" \u2022 <b>"+dalam+"</b> ganda di dalam file (dilewati)":"")+".";
+ $("pbGo").disabled=!baru;
+ const badge={baru:'<span style="color:#067647;font-weight:600">Baru</span>',ada:'<span style="color:#b42318;font-weight:600">Sudah ada</span>',dalam:'<span style="color:#b54708;font-weight:600">Ganda di file</span>'};
+ $("pbList").innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left"><th style="padding:4px">Status</th><th style="padding:4px">Judul</th><th style="padding:4px">Isian Jurnal</th></tr></thead><tbody>'+pbPlan.items.slice(0,200).map(it=>'<tr style="border-top:1px solid var(--line);vertical-align:top"><td style="padding:4px;white-space:nowrap">'+badge[it.st]+'</td><td style="padding:4px">'+esc(it.fin.judul)+'<div class="muted">'+esc(it.fin.penulis)+'</div></td><td style="padding:4px">'+esc(it.fin.jurnal)+'</td></tr>').join("")+'</tbody></table>'+(pbPlan.items.length>200?'<div class="muted" style="padding:6px">Menampilkan 200 baris pertama dari '+pbPlan.items.length+'.</div>':"")}
+async function imporPubExcel(f){
+ if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
+ try{toast("Membaca Excel\u2026");
+  const items=pbBaca(XLSX.read(await f.arrayBuffer(),{type:"array"}));
+  if(!items.length){toast("Kolom tidak dikenali. Butuh minimal kolom Title dan Source title. Pakai tombol Template Excel sebagai contoh.");return}
+  pbPlan={items:items.map(v=>({v}))};
+  $("pbKat").innerHTML=PUBKAT.map(x=>'<option>'+esc(x)+'</option>').join("");
+  $("pbInfo").textContent=f.name+" \u2014 "+items.length+" baris publikasi terbaca. Isian jurnal diambil dari kolom Source title, Volume, Issue, Year, Publisher, ISSN, Quartile, SJR.";
+  $("pbPeran").value="";pbGambar();$("pbSum").scrollIntoView&&0;$("dlgPub").showModal()
+ }catch(err){toast("Gagal membaca Excel: "+err.message)}}
+function templatePubXlsx(){
+ if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
+ const wb=XLSX.utils.book_new(),D=curD();
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Authors","Title","Year","Source title","Volume","Issue","Publisher","ISSN","Quartile","SJR"],[D.nama,"Contoh judul artikel","2024","Journal of Contoh","12","3","Elsevier","12345678","Q2","0.512"]]),"Publikasi");
+ XLSX.writeFile(wb,"template-impor-publikasi-jurnal.xlsx")}
+{const h=$("research").querySelector("h2");
+ h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPub">\ud83d\udce5 Impor Publikasi Jurnal dari Excel</button><button class="btn" id="bPubTpl" title="Unduh contoh format Excel untuk impor">\u2b07 Template Excel</button><input type="file" id="fPub" accept=".xlsx,.xls,.xlsm,.csv" hidden></div>')}
+$("bPub").onclick=()=>$("fPub").click();
+$("bPubTpl").onclick=templatePubXlsx;
+$("fPub").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(f)await imporPubExcel(f)};
+$("pbKat").onchange=$("pbPeran").oninput=()=>pbGambar();
+$("pbCancel").onclick=()=>{$("dlgPub").close();pbPlan=null};
+$("pbGo").onclick=()=>{if(!pbPlan)return;
+ const nw=pbPlan.items.filter(it=>it.st==="baru"),sst={cek:0,match:0,skip:0,ada:0},sync=new Set(),dups=new Set();let tm=Date.now();
+ nw.forEach(it=>{const ne={id:uid(),sec:"research",type:"pub",v:it.fin,t:tm++,d:cur};entries.push(ne);
+  const st={cek:0,match:0,skip:0,ada:0},sy=syncEntry(ne,st)||[];sy.forEach(x=>sync.add(x));(st.dups||[]).forEach(x=>dups.add(x))});
+ const lewat=pbPlan.items.length-nw.length;
+ persist();refresh();$("dlgPub").close();pbPlan=null;
+ toast(nw.length+" publikasi jurnal diimpor"+(lewat?", "+lewat+" dilewati karena sudah ada":"")+"."+(sync.size?" Disalin juga ke portofolio: "+[...sync].join(", ")+".":"")+(dups.size?" Data sudah ada di portofolio: "+[...dups].join(", ")+" (tidak digandakan).":""))};
 $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
  pendingMhs=null;
  if(/\.(xlsx|xls|xlsm|csv)$/i.test(f.name)){await imporExcel(f);return}
