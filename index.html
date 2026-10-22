@@ -52,7 +52,7 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 #printDoc table{border-collapse:collapse;width:100%;margin:3px 0 10px}
 #printDoc th,#printDoc td{border:1px solid #000;padding:2px 4px;vertical-align:top;overflow-wrap:break-word;word-break:normal;hyphens:manual;background:none;color:#000;font-size:inherit}
 #printDoc th{font-weight:400;text-align:center;vertical-align:middle}#printDoc th.no{width:5%;white-space:nowrap}#printDoc td.c{text-align:center}
-#printDoc tr{page-break-inside:avoid}#printDoc thead{display:table-header-group}#printDoc table.sum{width:100%}#printDoc table.sum th:last-child{width:24%}#printDoc table.sum th.no{width:5%}
+#printDoc tr{page-break-inside:avoid}#printDoc thead{display:table-header-group}#printDoc table.sum{width:100%}#printDoc table.fx{table-layout:fixed}#printDoc table.fx th,#printDoc table.fx td{overflow-wrap:anywhere}#printDoc table.sum th:last-child{width:24%}#printDoc table.sum th.no{width:5%}
 #printDoc a{color:#1a0dab;text-decoration:underline;overflow-wrap:anywhere}#printDoc th{white-space:normal}
 #printDoc .pid{display:flex;gap:18px;justify-content:space-between;margin:10px 0 6px}#printDoc table.pidt{border-collapse:collapse;width:auto;margin:0;flex:none}#printDoc table.pidt td{border:0;padding:1px 8px 1px 0;white-space:nowrap;text-align:left}#printDoc table.pidt tr.isub td:first-child{padding-left:5mm}
 #printDoc .pphoto{width:33mm;height:40mm;border:1px solid #000;flex:none;display:flex;align-items:center;justify-content:center;color:#888;overflow:hidden}#printDoc .pphoto img{width:100%;height:100%;object-fit:cover}
@@ -408,10 +408,10 @@ const pBold=v=>{let h=pTxt(v);if(pName)h=h.replace(pRe(pName),m=>"<b>"+m+"</b>")
 const pBk=v=>{v=String(v||"").trim();return !v?"":/^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}">Lihat bukti</a>`:esc(v)};
 const C=(h,g,o)=>Object.assign({h,g},o||{});
 const BK=h=>({h,g:"bukti",k:1,c:1,w:h.length>25?15:11});
-function ptab(cols,list){
- const head=`<thead><tr><th class="no">No.</th>${cols.map(c=>`<th${c.w?` style="width:${c.w}%"`:""}>${c.h}</th>`).join("")}</tr></thead>`;
+function ptab(cols,list,fx){
+ const head=`<thead><tr><th class="no">No.</th>${cols.map(c=>`<th${c.w?` style="width:${c.w}%"`:""}>${fx?c.h.replace(/\//g,"/<wbr>"):c.h}</th>`).join("")}</tr></thead>`;
  const body=list.length?list.map((e,i)=>`<tr><td class="c">${i+1}</td>${cols.map(c=>{const r=e.v[c.g];return `<td${c.c?' class="c"':""}>${c.k?pBk(r):c.b?pBold(r):pTxt(r)}</td>`}).join("")}</tr>`).join(""):`<tr><td class="c">1</td>${cols.map(()=>'<td class="c">-</td>').join("")}</tr>`;
- return `<table>${head}<tbody>${body}</tbody></table>`}
+ return `<table${fx?' class="fx"':""}>${head}<tbody>${body}</tbody></table>`}
 const psum=(h1,h2,items)=>`<table class="sum"><thead><tr><th class="no">No.</th><th>${h1}</th><th>${h2}</th></tr></thead><tbody>${items.map(([a,b],i)=>`<tr><td class="c">${i+1}</td><td>${esc(a)}</td><td class="c">${b}</td></tr>`).join("")}</tbody></table>`;
 const num=v=>parseInt(String(v||"").replace(/\D/g,""),10)||0;
 const nz=x=>String(x||"").trim().toLowerCase();
@@ -437,7 +437,7 @@ function buildDoc(){
  const pubCols=[C("Nama Penulis","penulis",{b:1,w:19}),C("Judul artikel","judul",{w:23}),C("Nama jurnal; No. Publikasi; Vol./tahun; ISSN; Tanggal; dan peringkat akreditasi; link","jurnal",{w:26}),C("Peranan (penulis pertama, corresponding author, penulis anggota)","peran",{c:1,w:11}),BK("Bukti dokumen (artikel, informasi jurnal, kinerja jurnal, turnitin dan bukti korespondensi)")];
  const ilmCols=[C("Nama Kegiatan","nama",{w:30}),C("Level (regional, nasional atau internasional)","level",{c:1,w:13}),C("Tempat, Tahun","tempat",{c:1,w:16}),C("Peranan (peserta, narasumber, pembicara dan lainnya)","peran",{c:1,w:14}),BK("Bukti dokumen (sertifikat, surat keterangan atau sejenisnya)")];
  const hibCols=[C("Tim Peneliti","tim",{b:1,w:16}),C("Peranan (ketua atau anggota)","peran",{c:1,w:10}),C("Judul Penelitian","judul",{b:1,w:28}),C("Level","level",{c:1,w:13}),C("Tahun/Periode","tahun",{c:1,w:9}),BK("Bukti dokumen (surat keterangan atau kontrak)")];
- const abdCols=[C("Tim","tim",{b:1,w:16}),C("Peranan (ketua/anggota/instruktur/tenaga ahli atau lainnya)","peran",{c:1,w:12}),C("Nama Kegiatan","nama",{w:26}),C("Tempat","tempat",{c:1,w:14}),C("Tahun","tahun",{c:1,w:7}),BK("Bukti dokumen (surat keterangan atau kontrak)")];
+ const abdCols=[C("Tim","tim",{b:1,w:24}),C("Peranan (ketua/anggota/instruktur/tenaga ahli atau lainnya)","peran",{c:1,w:13}),C("Nama Kegiatan","nama",{w:27}),C("Tempat","tempat",{c:1,w:13}),C("Tahun","tahun",{c:1,w:7}),BK("Bukti dokumen (surat keterangan atau kontrak)")];
  const pubK=p=>rowsOf("research","pub").filter(e=>(e.v.kat||PUBKAT[0]).startsWith(p));
  const bimL=late("teaching","bimb"),ujiL=late("teaching","uji"),ilmL=late("activities","ilmiah"),hibL=late("research","hibah"),abdL=late("community","abdi");
  const photo=D.foto?`<img src="${D.foto}" alt="">`:"<span>Pas foto</span>";
@@ -482,7 +482,7 @@ function buildDoc(){
 <div class="psub">9.2. Sejak kenaikan jabatan terakhir (nama pengusul ditebalkan)</div>${ptab(hibCols,hibL)}
 <h4>X. KEGIATAN PENGABDIAN KEPADA MASYARAKAT</h4>
 <div class="psub">10.1. Sejak menjadi dosen</div>${psum("Peran dalam kegiatan","Jumlah",["Ketua","Anggota"].map(l=>[l,cntOf(rAbd,eAbd,"peran",l)]))}
-<div class="psub">10.2. Sejak kenaikan jabatan terakhir (nama pengusul ditebalkan)</div>${ptab(abdCols,abdL)}
+<div class="psub">10.2. Sejak kenaikan jabatan terakhir (nama pengusul ditebalkan)</div>${ptab(abdCols,abdL,1)}
 <h4>XI. KARYA BERMANFAAT (sejak menjadi dosen)</h4><div class="pnote">(HAKI, Paten, Prototipe, Karya-karya perancangan, dan karya sejenis lainnya) (nama pengusul ditebalkan)</div>${ptab([C("Nama Tim","tim",{b:1,w:22}),C("Jenis Karya","jenis",{c:1,w:14}),C("Judul Karya","judul",{b:1,w:30}),C("Tahun","tahun",{c:1,w:7}),C("Keterangan","ket",{c:1,w:10}),BK("")],rowsOf("research","karya"))}
 <h4>XII. KEGIATAN PENGEMBANGAN INSTITUSI (sejak menjadi dosen)</h4><div class="pnote">(termasuk keterlibatan dalam satgas dan panitia adhoc lainnya, termasuk anggota tim revisi kurikulum; atau anggota GKM prodi atau F/S; atau anggota Advisory Board bidang Pendidikan di luar ITB; atau menjadi anggota tim kajian akademik di asosiasi profesi)</div>
 ${[["Program Studi","12.1. Tingkat Program Studi"],["Fakultas/Sekolah","12.2. Tingkat Fakultas/Sekolah"],["ITB","12.3. Tingkat ITB"]].map(([t,h])=>`<div class="psub">${h}</div>${ptab([C("Nama Kegiatan","nama",{w:55}),C("Peranan (ketua/anggota/lainnya)","peran",{c:1,w:15}),C("Tahun","tahun",{c:1,w:8}),BK("")],rowsOf("community","inst").filter(e=>e.v.tingkat===t))}`).join("")}
