@@ -304,9 +304,10 @@ $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  const wasEdit=!!editId,dd=$("dDup"),dup=findDup(s,k,v,cur,editId);
  if(dup){const jd=dup.v.judul||"data yang sama";dd.innerHTML="<b>Data sudah ada</b>\u201c"+esc(jd)+"\u201d sudah tercatat di portofolio "+esc(curD().nama)+". Setiap dosen hanya memiliki 1 data yang sama, jadi data ini tidak disimpan ganda. Ubah data yang sudah ada jika perlu.";dd.hidden=false;toast("Data sudah ada di portofolio "+curD().nama+".");return}
  dd.hidden=true;
- let saved;if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){e.v=v;saved=e}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
+ let saved,pr=[];if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){const ov=e.v,ok=dupKeyOf(e.sec,e.type,ov);e.v=v;saved=e;e._pr={ov,ok}}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
  const sst={cek:0,match:0,skip:0,ada:0},sy=saved?syncEntry(saved,sst):[];
- persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
+ if(saved&&saved._pr){pr=propagateShared(saved,saved._pr.ok,saved._pr.ov);delete saved._pr}
+ persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
  if(!wasEdit&&ctxSec==="dashboard")show(s)});
 
 /* ===== Aksi: hapus, ekspor, impor, reset ===== */
@@ -344,6 +345,16 @@ function dedupeResearch(){let n=0;const seen=new Map();
   if(!o){seen.set(id,e);return true}
   Object.keys(e.v).forEach(f=>{if(!o.v[f]&&e.v[f])o.v[f]=e.v[f]});if(!o.g&&e.g)o.g=e.g;n++;return false});
  return n}
+/* Isian Jurnal & Bukti pada data Publikasi Jurnal yang sama bersifat bersama: bila diubah di satu dosen, salinannya di portofolio
+   dosen lain ikut diperbarui (hanya kolom yang benar-benar diubah; Peranan tetap pribadi). Data yang sama dikenali dari kelompok sinkron (g) atau judul. */
+const SHAREF={"research|pub":["jurnal","bukti"]};
+function propagateShared(e,oldKey,ov){const F=SHAREF[e.sec+"|"+e.type];if(!F)return[];
+ const ch=F.filter(k=>(ov[k]||"")!==(e.v[k]||""));if(!ch.length)return[];
+ const nk=dupKeyOf(e.sec,e.type,e.v),names=[];
+ entries.forEach(x=>{if(x===e||x.d===e.d||x.sec!==e.sec||x.type!==e.type)return;
+  const kx=dupKeyOf(x.sec,x.type,x.v);
+  if((e.g&&x.g===e.g)||(kx&&(kx===oldKey||kx===nk))){ch.forEach(k=>{x.v[k]=e.v[k]||""});const D=dosens.find(d=>d.id===x.d);if(D)names.push(D.nama)}});
+ return[...new Set(names)]}
 /* ===== Sinkron otomatis nama penulis/penyusun/tim ke portofolio dosen lain =====
    Setiap dosen mendapat SALINAN MANDIRI (id sendiri). Menghapus salinan hanya menghapus di portofolio dosen itu.
    Hapusan dicatat di dosen.skip agar tidak dibuat ulang saat sinkron berikutnya. */
