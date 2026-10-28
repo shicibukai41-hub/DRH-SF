@@ -518,7 +518,7 @@ ${[["Program Studi","12.1. Tingkat Program Studi"],["Fakultas/Sekolah","12.2. Ti
 <h4>XVIII. JEJARING KERJA SAMA YANG SUDAH DIBANGUN (sejak menjadi dosen)</h4>${ptab([C("Kegiatan","kegiatan",{w:30}),C("Tempat","tempat",{c:1,w:28}),C("Tahun","tahun",{c:1,w:10}),C("Keterangan","ket",{c:1,w:12}),BK("")],rowsOf("awards","jejaring"))}
 <h4>XIX. PERNYATAAN ETIKA</h4>
 <p>Dengan ini saya menyatakan bahwa saya saat ini tidak sedang terkena sanksi pelanggaran disiplin pegawai dan/atau pelanggaran kode etik dosen.</p>
-<div class="psign"><div>Bandung, ${tgl}</div><div>Diverifikasi oleh<br>${vJab}</div><div class="psn">Nama: ${esc(D.nama)}<br>NIP. ${esc(D.nip||"")}</div><div class="psn">${esc(vNama)}<br>NIP. ${esc(vNip)}</div></div>`}
+<div class="psign"><div>Bandung, ${tgl}</div><div>Diverifikasi oleh<br>${vJab}</div><div class="psn">${esc(D.nama)}<br>NIP. ${esc(D.nip||"")}</div><div class="psn">${esc(vNama)}<br>NIP. ${esc(vNip)}</div></div>`}
 function doPrint(){
  curD().tgl=$("tglCetak").value;persist();
  const old=document.title;$("printDoc").innerHTML=buildDoc();document.title="Riwayat Hidup - "+curD().nama;
