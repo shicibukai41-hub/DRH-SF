@@ -451,7 +451,7 @@ function buildDoc(){
   /* sejak menjadi dosen: matakuliah yang sama (kode sama, jenjang sama) hanya tampil sekali walau tercatat di banyak semester */
   const seen=new Set();return l.filter(e=>{const m=String(e.v.mk||"").trim(),t=m.split(/\s+/)[0],k=(e.v.jenjang||"S1")+"|"+((/\d/.test(t)&&t.length<=10?t:m).toLowerCase());
    if(seen.has(k))return false;seen.add(k);return true})};
- const mkCols=[C("Kode dan Nama Mata Kuliah/Praktikum/Studio","mk",{w:44}),C("Semester/Tahun","sem",{c:1,w:13}),C("Fakultas/Sekolah","fak",{c:1,w:16}),{h:"Bukti dokumen: Link SK Dekan",g:"bukti_sk",k:1,c:1,w:12},{h:"Bukti dokumen: Link Kuesioner",g:"bukti_kq",k:1,c:1,w:12}];
+ const mkCols=[C("Kode dan Nama Mata Kuliah/Praktikum/Studio","mk",{w:44}),C("Semester/Tahun","sem",{c:1,w:13}),C("Fakultas/Sekolah","fak",{c:1,w:16}),{h:"Bukti dokumen (SK Dekan dan hasil kuesioner perkuliahan)",w:27,m:[["SK Dekan","bukti_sk"],["Kuesioner","bukti_kq"]]}];
  const bimCols=[C("Nama Mahasiswa","nama",{w:18}),C("NIM","nim",{c:1,w:10}),C("Fakultas/Sekolah","fak",{c:1,w:11}),C("Perguruan Tinggi","pt",{c:1,w:13}),C("Peranan (ketua/ko-pembimbing)","peran",{c:1,w:16}),C("Tahun Lulus (sem.)","lulus",{c:1,w:9}),BK("Bukti dokumen (SK Dekan)")];
  const ujiCols=[C("Jenjang","jenjang",{c:1,w:8}),C("NIM","nim",{c:1,w:12}),C("Nama Mahasiswa","nama",{w:28}),C("Fakultas/Sekolah","fak",{c:1,w:16}),C("Tahun Lulus (sem.)","lulus",{c:1,w:11}),BK("Bukti dokumen (SK Dekan)")];
  const mkEarly=[C("Kode dan Nama Mata Kuliah/Praktikum/Studio","mk",{w:70}),C("Fakultas/Sekolah","fak",{c:1,w:22})];
