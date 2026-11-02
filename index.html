@@ -237,10 +237,12 @@ $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-
 function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>")}
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
 const PG=5;let pg={};
-/* Mata Kuliah: data dengan semester/tahun yang sama dikelompokkan bersama (disisipkan setelah data semester itu, bukan di akhir) */
-const semKey=e=>{const s=String((e.v&&e.v.sem)||"").toLowerCase().replace(/\s+/g," ").trim();return s?String((e.v&&e.v.periode)||"")+"|"+s:""};
-function grpSem(list){const out=[],last={};list.forEach(e=>{const k=semKey(e);if(k&&last[k]!==undefined){const at=last[k]+1;out.splice(at,0,e);Object.keys(last).forEach(x=>{if(last[x]>=at)last[x]++});last[k]=at}else{out.push(e);if(k)last[k]=out.length-1}});return out}
-const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?grpSem(l):l;
+/* Mata Kuliah: selalu terurut otomatis per periode, lalu semester/tahun (lama -> baru), lalu kode mata kuliah */
+const semNo=t=>{t=String(t||"").toLowerCase();let m=t.match(/\b(ganjil|genap|pendek|antara)\b/);if(m)return{ganjil:1,genap:2,pendek:3,antara:3}[m[1]];m=t.match(/(?:semester|smt|sem)\.?\s*([ivx]+|\d)\b/);if(m){const r={i:1,ii:2,iii:3,iv:4,v:5,"1":1,"2":2,"3":3,"4":4}[m[1]];if(r)return r}return 9};
+const semVal=t=>{const y=String(t||"").match(/(?:19|20)\d{2}/);return y?Number(y[0])*10+semNo(t):0};
+const kodeMk=e=>{const m=String((e.v&&e.v.mk)||"").trim(),t=m.split(/\s+/)[0];return (/\d/.test(t)&&t.length<=10?t:m).toLowerCase()};
+function sortMk(list){return list.map((e,i)=>[e,i,semVal(e.v&&e.v.sem),(e.v&&e.v.periode)==="Sejak menjadi dosen"?0:1]).sort((a,b)=>a[3]-b[3]||(!a[2])-(!b[2])||a[2]-b[2]||kodeMk(a[0]).localeCompare(kodeMk(b[0]),"id",{numeric:true})||a[1]-b[1]).map(x=>x[0])}
+const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?sortMk(l):l;
 function listOf(s,k){return fixList(s,k,mineE().filter(e=>e.sec===s&&e.type===k))}
 function pager(key,p,pages,total){
  if(pages<2)return"";
