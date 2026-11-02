@@ -237,11 +237,32 @@ $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-
 function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>")}
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
 const PG=5;let pg={};
-/* Mata Kuliah: selalu terurut otomatis per periode, lalu semester/tahun (lama -> baru), lalu kode mata kuliah */
+/* Mata Kuliah: urutan semester/tahun yang sudah ada dipertahankan; data baru disisipkan menurut semester/tahun lalu kode mata kuliah */
 const semNo=t=>{t=String(t||"").toLowerCase();let m=t.match(/\b(ganjil|genap|pendek|antara)\b/);if(m)return{ganjil:1,genap:2,pendek:3,antara:3}[m[1]];m=t.match(/(?:semester|smt|sem)\.?\s*([ivx]+|\d)\b/);if(m){const r={i:1,ii:2,iii:3,iv:4,v:5,"1":1,"2":2,"3":3,"4":4}[m[1]];if(r)return r}return 9};
 const semVal=t=>{const y=String(t||"").match(/(?:19|20)\d{2}/);return y?Number(y[0])*10+semNo(t):0};
 const kodeMk=e=>{const m=String((e.v&&e.v.mk)||"").trim(),t=m.split(/\s+/)[0];return (/\d/.test(t)&&t.length<=10?t:m).toLowerCase()};
-function sortMk(list){return list.map((e,i)=>[e,i,semVal(e.v&&e.v.sem),(e.v&&e.v.periode)==="Sejak menjadi dosen"?0:1]).sort((a,b)=>a[3]-b[3]||(!a[2])-(!b[2])||a[2]-b[2]||kodeMk(a[0]).localeCompare(kodeMk(b[0]),"id",{numeric:true})||a[1]-b[1]).map(x=>x[0])}
+const semKey=e=>{const v=e.v||{};return (v.periode==="Sejak menjadi dosen"?"0":"1")+"|"+(v.periode==="Sejak menjadi dosen"?"":String(v.sem||"").toLowerCase().replace(/\s+/g," ").trim())};
+const kodeCmp=(a,b)=>kodeMk(a).localeCompare(kodeMk(b),"id",{numeric:true});
+/* Tampilan: urutan periode & semester/tahun mengikuti urutan data yang sudah tersimpan (tidak diubah);
+   di dalam satu semester/tahun data diurutkan menurut kode mata kuliah */
+function sortMk(list){const gi=new Map();list.forEach(e=>{const k=semKey(e);if(!gi.has(k))gi.set(k,gi.size)});
+ const pr=e=>(e.v&&e.v.periode)==="Sejak menjadi dosen"?0:1;
+ return list.map((e,i)=>[e,i]).sort((a,b)=>pr(a[0])-pr(b[0])||gi.get(semKey(a[0]))-gi.get(semKey(b[0]))||kodeCmp(a[0],b[0])||a[1]-b[1]).map(x=>x[0])}
+/* Simpan data mata kuliah baru/terlewat pada posisi yang tepat di penyimpanan:
+   - semester/tahun sudah ada  -> disisipkan sesuai urutan kode di dalam kelompok itu
+   - semester/tahun belum ada  -> kelompok baru disisipkan menurut urutan waktu, tanpa memindahkan kelompok lain */
+function placeMk(ne){const ix=entries.indexOf(ne);if(ix<0)return;entries.splice(ix,1);
+ const same=x=>x.d===ne.d&&x.sec==="teaching"&&x.type==="mk"&&(x.v&&x.v.periode)===(ne.v&&ne.v.periode);
+ const pos=[];entries.forEach((x,i)=>{if(same(x))pos.push(i)});
+ if(!pos.length){const all=[];entries.forEach((x,i)=>{if(x.d===ne.d&&x.sec==="teaching"&&x.type==="mk")all.push(i)});
+  const awal=(ne.v&&ne.v.periode)==="Sejak menjadi dosen";
+  if(awal&&all.length){entries.splice(all[0],0,ne);return}
+  entries.push(ne);return}
+ const k=semKey(ne),grp=pos.filter(i=>semKey(entries[i])===k);
+ if(grp.length){let at=grp[grp.length-1]+1;for(const i of grp){if(kodeCmp(entries[i],ne)>0){at=i;break}}entries.splice(at,0,ne);return}
+ const val=semVal(ne.v&&ne.v.sem);
+ if(val){for(const i of pos){const g=semVal(entries[i].v&&entries[i].v.sem);if(g&&g>val){entries.splice(i,0,ne);return}}}
+ entries.splice(pos[pos.length-1]+1,0,ne)}
 const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?sortMk(l):l;
 function listOf(s,k){return fixList(s,k,mineE().filter(e=>e.sec===s&&e.type===k))}
 function pager(key,p,pages,total){
@@ -314,7 +335,7 @@ $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  const wasEdit=!!editId,dd=$("dDup"),dup=findDup(s,k,v,cur,editId);
  if(dup){const jd=dup.v.judul||"data yang sama";dd.innerHTML="<b>Data sudah ada</b>\u201c"+esc(jd)+"\u201d sudah tercatat di portofolio "+esc(curD().nama)+". Setiap dosen hanya memiliki 1 data yang sama, jadi data ini tidak disimpan ganda. Ubah data yang sudah ada jika perlu.";dd.hidden=false;toast("Data sudah ada di portofolio "+curD().nama+".");return}
  dd.hidden=true;
- let saved,pr=[];if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){const ov=e.v,ok=dupKeyOf(e.sec,e.type,ov);e.v=v;saved=e;e._pr={ov,ok}}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
+ let saved,pr=[];if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){const ov=e.v,ok=dupKeyOf(e.sec,e.type,ov),mkMoved=e.sec==="teaching"&&e.type==="mk"&&semKey({v:ov})!==semKey({v});e.v=v;if(mkMoved)placeMk(e);saved=e;e._pr={ov,ok}}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);if(s==="teaching"&&k==="mk")placeMk(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
  const sst={cek:0,match:0,skip:0,ada:0},sy=saved?syncEntry(saved,sst):[];
  if(saved&&saved._pr){pr=propagateShared(saved,saved._pr.ok,saved._pr.ov);delete saved._pr}
  persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
@@ -861,7 +882,7 @@ function terapkan(plan,sem,periode){
   r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=(awal?"":sm)+"|"+(m.kode||label);
    if(ada.has(key)){lewat++;return}ada.add(key);
    const v={mk:label,periode:periode};if(!awal)v.sem=sm;if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
-   entries.push({id:uid(),sec:"teaching",type:"mk",v:v,t:Date.now(),d:id});tambah++})});
+   {const ne={id:uid(),sec:"teaching",type:"mk",v:v,t:Date.now(),d:id};entries.push(ne);placeMk(ne)}tambah++})});
  persist();refresh();return{tambah,lewat,baru}}
 window.imporSK={parseSK,rencana,semesterDari,terapkan,parseMahasiswa,rencanaMhs,terapkanMhs,bukaMhs};
 /* --- pembaca Excel (.xlsx / .xls / .csv): kolom dikenali dari judul kolom --- */
