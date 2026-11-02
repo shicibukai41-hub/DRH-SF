@@ -237,7 +237,11 @@ $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-
 function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>")}
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
 const PG=5;let pg={};
-function listOf(s,k){let list=mineE().filter(e=>e.sec===s&&e.type===k);return s==="research"?sortY(list):list}
+/* Mata Kuliah: data dengan semester/tahun yang sama dikelompokkan bersama (disisipkan setelah data semester itu, bukan di akhir) */
+const semKey=e=>{const s=String((e.v&&e.v.sem)||"").toLowerCase().replace(/\s+/g," ").trim();return s?String((e.v&&e.v.periode)||"")+"|"+s:""};
+function grpSem(list){const out=[],last={};list.forEach(e=>{const k=semKey(e);if(k&&last[k]!==undefined){const at=last[k]+1;out.splice(at,0,e);Object.keys(last).forEach(x=>{if(last[x]>=at)last[x]++});last[k]=at}else{out.push(e);if(k)last[k]=out.length-1}});return out}
+const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?grpSem(l):l;
+function listOf(s,k){return fixList(s,k,mineE().filter(e=>e.sec===s&&e.type===k))}
 function pager(key,p,pages,total){
  if(pages<2)return"";
  const nums=[];for(let i=1;i<=pages;i++){if(pages<=7||i===1||i===pages||Math.abs(i-p)<=1)nums.push(i);else if(nums[nums.length-1]!=="…")nums.push("…")}
@@ -421,7 +425,7 @@ $("frmD").addEventListener("submit",ev=>{ev.preventDefault();const v={};DF.forEa
 /* ===== Cetak / Simpan PDF (format Riwayat Hidup ITB) ===== */
 const BLN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const idDate=d=>d.getDate()+" "+BLN[d.getMonth()]+" "+d.getFullYear();
-const rowsOf=(sec,type)=>{const l=mineE().filter(e=>e.sec===sec&&e.type===type);return sec==="research"?sortY(l):l};
+const rowsOf=(sec,type)=>fixList(sec,type,mineE().filter(e=>e.sec===sec&&e.type===type));
 const isEarly=e=>e.v.periode==="Sejak menjadi dosen";
 const coreName=n=>String(n).split(",")[0].replace(/\b(dr|prof|apt|ir|drs|dra|h|hj)\.\s*/gi,"").replace(/\s+/g," ").trim();
 const pRe=n=>new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/\s+/g,"\\s+"),"gi");
