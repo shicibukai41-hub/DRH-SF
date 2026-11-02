@@ -766,7 +766,7 @@ function parseMahasiswa(pages) {
 
   if (matriks) {
     // ---- tata letak matriks (satu baris per mahasiswa, kolom peran) ----
-    let heads = null, prodiX = null, nimX = null;
+    let heads = null, prodiX = null, nimX = null, nameHX = null, nimHX = null;
     for (const p of P) {
       const nimH = p.find(i => i.str.trim() === 'NIM');                      // baris judul kolom: harus ada "NIM" di baris yang sama
       if (!nimH) continue;
@@ -774,6 +774,7 @@ function parseMahasiswa(pages) {
       if (hs.length >= 2) {
         heads = hs.sort((a, b) => a.x - b.x).map(h => ({ x: h.x, role: roleOf(h.str), label: h.str.trim() }));
         const pr = p.find(i => /^Fakultas/i.test(i.str.trim()) && Math.abs(i.y - nimH.y) < 4); prodiX = pr ? pr.x : heads[0].x - 90;
+        const nmH = p.find(i => i !== nimH && /^Nama(\s+Mahasiswa)?$/i.test(i.str.trim()) && Math.abs(i.y - nimH.y) < 4); nameHX = nmH ? nmH.x : null; nimHX = nimH.x;
         break;
       }
     }
@@ -790,7 +791,7 @@ function parseMahasiswa(pages) {
         const s = it.str.trim();
         if (NIM.test(s) && Math.abs(it.x - nimX) < 15) continue;
         if (JUNK.test(s)) continue;
-        const isName = it.x > nimX + 20 && it.x < prodiX - 8;
+        const isName = (nameHX !== null && nameHX < nimHX - 10) ? (it.x >= nameHX - 25 && it.x < nimX - 8 && !NIM.test(s)) : (it.x > nimX + 20 && it.x < prodiX - 8);   // nama di kiri NIM bila judul kolomnya di kiri
         const colIdx = (() => { if (it.x < heads[0].x - 30) return -1; let k = -1; heads.forEach((h, i) => { if (h.x <= it.x + 30) k = i; }); return k; })();
         if (!isName && colIdx < 0) continue;
         let r = -1; rowOf.forEach((rw, k) => { if (rw.y >= it.y - 13) r = k; });
@@ -893,7 +894,7 @@ function peranDari(t){t=kunci(t);if(/seminar|penilai/.test(t))return"seminar";if
 function tipeKolom(h){const t=kunci(h);if(!t)return"";
  if(/^(peran|peranan|role|sebagai|jenis penugasan)$/.test(t))return"peran";
  if(/^(nim|nomor induk|no induk|nomor induk mahasiswa)$/.test(t))return"nim";
- if(/nama mahasiswa|^mahasiswa$|nama peserta/.test(t))return"mhs";
+ if(/nama (mahasiswa|mahasiswi|mhs|siswa|peserta)|^(mahasiswa|mahasiswi|mhs|student|name|nama lengkap|nama lengkap mahasiswa|peserta)$|mahasiswa yang|student name/.test(t))return"mhs";
  if(/pembimbing|penguji|penilai|promotor/.test(t))return"role";
  if(/kode/.test(t))return/(dan|nama)/.test(t)?"mk":"kode";
  if(/mata ?kuliah|matakuliah|^mk$|nama mk|nama kuliah|praktikum/.test(t))return"mk";
@@ -912,6 +913,10 @@ function bacaSheet(rows){
  const col=x=>tp.indexOf(x),data=rows.slice(h+1),nimC=col("nim");
  if(nimC>=0){                                   /* daftar mahasiswa: pembimbingan / penguji */
   let mC=col("mhs");if(mC<0)mC=col("nama");
+  if(mC<0)tp.forEach((x,i)=>{if(mC<0&&!x&&i!==nimC&&/nama|mahasiswa|mhs/.test(kunci(rows[h][i])))mC=i});   /* judul memuat kata nama/mahasiswa */
+  if(mC<0)[nimC+1,nimC-1].forEach(i=>{if(mC>=0||i<0||tp[i])return;                                           /* kolom tak berjudul di sebelah NIM yang isinya seperti nama orang */
+   const v=data.map(r=>sel(r[i])).filter(Boolean);
+   if(v.length&&v.filter(x=>/[A-Za-z]{2,}/.test(x)&&!/\d{4,}/.test(x)&&x.length<60).length>=v.length*0.8)mC=i});
   const roles=[];tp.forEach((x,i)=>{if(x==="role")roles.push({i:i,role:peranDari(rows[h][i])})});
   const dC=col("dosen"),pC=col("peran"),rec=[];let lastD="";
   data.forEach(r=>{const nim=sel(r[nimC]).replace(/\s/g,"").replace(/\.0$/,"");if(!/^\d{6,}$/.test(nim))return;
@@ -1098,17 +1103,17 @@ function rencanaMhs(rec){
  rec.forEach(r=>{const nama=bersihDosen(r.dosen),k=normNama(nama);if(!k||!r.nim)return;
   let o=g.get(k);
   if(!o){const h=cocok(nama);o={nama:nama,roles:{bimb:new Map(),sidang:new Map(),seminar:new Map()},target:h?h.id:"",cocok:!!h};g.set(k,o)}
-  if(!o.roles[r.role].has(r.nim))o.roles[r.role].set(r.nim,r.nama)});
+  {const c0=o.roles[r.role].get(r.nim);if(c0===undefined||(!c0&&r.nama))o.roles[r.role].set(r.nim,r.nama)}});
  return[...g.values()].sort((a,b)=>b.cocok-a.cocok||a.nama.localeCompare(b.nama))}
 function terapkanMhs(pl,o){
- let bimb=0,uji=0,lewat=0,baru=0;
+ let bimb=0,uji=0,lewat=0,baru=0,isi=0;
  const jenj=nim=>o.jenjang?({"1":"S1","2":"S2","3":"S3"}[String(nim)[0]]||""):"";
  pl.forEach(r=>{if(r.target==="")return;
   let id=r.target;
   if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
-  const ada=t=>new Set(entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type===t).map(e=>String(e.v.nim||"").trim()));
+  const ada=t=>new Map(entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type===t).map(e=>[String(e.v.nim||"").trim(),e]));
   const sudah={bimb:ada("bimb"),uji:ada("uji")};
-  const tambah=(type,nim,nama)=>{if(sudah[type].has(nim)){lewat++;return false}sudah[type].add(nim);
+  const tambah=(type,nim,nama)=>{if(sudah[type].has(nim)){const ex=sudah[type].get(nim);if(ex&&nama&&!String(ex.v.nama||"").trim()){ex.v.nama=nama;ex.t=Date.now();isi++}else lewat++;return false}sudah[type].set(nim,null);
    const v={nama:nama,nim:nim},j=jenj(nim);if(j)v.jenjang=j;
    entries.push({id:uid(),sec:"teaching",type:type,v:v,t:Date.now(),d:id});return true};
   if(o.bimb)r.roles.bimb.forEach((nama,nim)=>{if(tambah("bimb",nim,nama))bimb++});
@@ -1116,7 +1121,7 @@ function terapkanMhs(pl,o){
   if(o.sidang)r.roles.sidang.forEach((n,k)=>u.set(k,n));
   if(o.seminar)r.roles.seminar.forEach((n,k)=>{if(!u.has(k))u.set(k,n)});
   u.forEach((nama,nim)=>{if(tambah("uji",nim,nama))uji++})});
- persist();refresh();return{bimb:bimb,uji:uji,lewat:lewat,baru:baru}}
+ persist();refresh();return{bimb:bimb,uji:uji,lewat:lewat,baru:baru,isi:isi}}
 let mplan=[];
 const mOpt=()=>({bimb:$("mBim").checked,sidang:$("mSid").checked,seminar:$("mSem").checked,jenjang:$("mJen").checked});
 function hitungMhs(r,o){const u=new Set();if(o.sidang)r.roles.sidang.forEach((n,k)=>u.add(k));if(o.seminar)r.roles.seminar.forEach((n,k)=>u.add(k));return{bimb:o.bimb?r.roles.bimb.size:0,uji:u.size}}
@@ -1129,9 +1134,9 @@ function gambarMhs(){
  ringkasMhs()}
 function bukaMhs(mh,nama){
  mplan=rencanaMhs(mh.records);
- const c={bimb:0,sidang:0,seminar:0},nims=new Set(mh.records.map(r=>r.nim));
+ const c={bimb:0,sidang:0,seminar:0},nims=new Set(mh.records.map(r=>r.nim)),bernama=new Set(mh.records.filter(r=>String(r.nama||"").trim()).map(r=>r.nim)),tn=[...nims].filter(n=>!bernama.has(n)).length;
  mplan.forEach(r=>{for(const k in c)c[k]+=r.roles[k].size});
- $("mInfo").textContent=nama+" — "+nims.size+" mahasiswa, "+mplan.length+" dosen terbaca. Pilih data yang diimpor dan profil tujuan tiap dosen.";
+ $("mInfo").textContent=nama+" — "+nims.size+" mahasiswa, "+mplan.length+" dosen terbaca. Pilih data yang diimpor dan profil tujuan tiap dosen."+(tn?" PERINGATAN: "+tn+" mahasiswa terbaca tanpa nama (kolom nama tidak terdeteksi di file). Periksa judul kolom nama di file Anda.":"");
  [["mBim","bimb"],["mSid","sidang"],["mSem","seminar"]].forEach(a=>{const el=$(a[0]);el.disabled=!c[a[1]];
   el.checked=!!c[a[1]]&&(a[1]==="bimb"?mh.jenis==="baris":a[1]==="sidang");
   $(a[0]+"N").textContent=c[a[1]]?" ("+c[a[1]]+" entri)":" (tidak ada di file ini)"});
@@ -1145,7 +1150,7 @@ $("mGo").onclick=()=>{const o=mOpt();
  if(!o.bimb&&!o.sidang&&!o.seminar){toast("Pilih minimal satu jenis data.");return}
  if(!mplan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
  const r=terapkanMhs(mplan,o);$("dlgMhs").close();
- toast(r.bimb+" pembimbingan dan "+r.uji+" penguji ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
+ toast(r.bimb+" pembimbingan dan "+r.uji+" penguji ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.isi?", "+r.isi+" nama mahasiswa dilengkapi pada data lama":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 })();
 refresh();
 {const dd=dedupeResearch();if(syncAll()||dd){applying=true;persist();applying=false}
