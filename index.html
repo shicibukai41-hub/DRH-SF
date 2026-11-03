@@ -263,7 +263,11 @@ function placeMk(ne){const ix=entries.indexOf(ne);if(ix<0)return;entries.splice(
  const val=semVal(ne.v&&ne.v.sem);
  if(val){for(const i of pos){const g=semVal(entries[i].v&&entries[i].v.sem);if(g&&g>val){entries.splice(i,0,ne);return}}}
  entries.splice(pos[pos.length-1]+1,0,ne)}
-const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?sortMk(l):l;
+/* Pembimbingan Mahasiswa: diurut menurut Tahun Lulus (sem.) dari yang terlama ke terbaru; tanpa tahun di urutan akhir; urutan input dipertahankan bila sama */
+const lulusVal=t=>{const y=String(t||"").match(/(?:19|20)\d{2}/);return y?Number(y[0])*10+semNo(t):0};
+function sortBim(list){const pr=e=>(e.v&&e.v.periode)==="Sejak menjadi dosen"?0:1;
+ return list.map((e,i)=>[e,i,lulusVal(e.v&&e.v.lulus)]).sort((a,b)=>pr(a[0])-pr(b[0])||(!a[2])-(!b[2])||a[2]-b[2]||a[1]-b[1]).map(x=>x[0])}
+const fixList=(s,k,l)=>s==="research"?sortY(l):s==="teaching"&&k==="mk"?sortMk(l):s==="teaching"&&k==="bimb"?sortBim(l):l;
 function listOf(s,k){return fixList(s,k,mineE().filter(e=>e.sec===s&&e.type===k))}
 function pager(key,p,pages,total){
  if(pages<2)return"";
