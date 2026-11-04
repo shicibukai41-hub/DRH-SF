@@ -714,6 +714,23 @@ const JUNK_I = /^(DEKAN|NIP\b|Halaman\b|LAMPIRAN|DOSEN PEMBIMBING|B\.\s*PENGUJI)
 const JUNK = { test: t => JUNK_I.test(t) || /^Prof\.\s*apt\.?,?\s*I\s*KETUT\s+ADNYANA/.test(t) };
 const roleOf = h => /Seminar|Penilai/i.test(h) ? 'seminar' : /Sidang|Penguji/i.test(h) ? 'sidang' : /Pembimbing|Promotor/i.test(h) ? 'bimb' : null;
 
+/* --- perapihan nama dosen: gabungkan potongan baris (gelar saja / nama terpotong) --- */
+const TOK_GELAR=new Set("s farm si t pd m sc kes or apt ph d dea ms mm mba mph finasim fccp ipp sp ind klin ked h rer nat".split(" "));
+const TOK_DEPAN=new Set("prof dr drs dra ir apt drg h hj rer nat".split(" "));
+const tokNama=t=>String(t||"").replace(/\(.*?\)/g," ").replace(/[,.\s]+/g," ").trim().toLowerCase().split(" ").filter(Boolean);
+const hanyaGelarBelakang=t=>{const k=tokNama(t);return k.length>0&&k.every(w=>TOK_GELAR.has(w))};
+const hanyaGelarDepan=t=>{const k=tokNama(t);return k.length>0&&k.every(w=>TOK_DEPAN.has(w))};
+function rapikanNama(arr){const out=[];
+ arr.forEach(x=>{const t=String(x||"").replace(/\s+/g," ").trim();if(!t)return;
+  const p=out.length?out[out.length-1]:null;
+  if(p!==null&&(/,\s*$/.test(p)||hanyaGelarDepan(p)||hanyaGelarBelakang(t)))out[out.length-1]=p+" "+t;else out.push(t)});
+ return out}
+/* nama tampilan: tanpa gelar depan & belakang */
+function namaTampil(n){let t=String(n||"").replace(/\s*\((?:Penguji|Pembimbing)[^)]*\)\s*$/i,"").replace(/\s+/g," ").trim();
+ t=t.replace(/^(?:(?:prof|drs|dra|drg|dr|ir|apt|hj|h)\.?\s+)+/i,"");
+ t=t.split(",")[0].trim();
+ const w=t.split(" ");const gl=x=>{const q=x.replace(/,/g,"").split(".").filter(Boolean).map(y=>y.toLowerCase());return /\./.test(x)&&q.length>0&&q.every(y=>TOK_GELAR.has(y))};while(w.length>1&&gl(w[w.length-1]))w.pop();
+ return w.join(" ").trim()||String(n||"").trim()}
 function splitNames(lines) {            // lines: [{y,str}] urut dari atas ke bawah
   const out = []; let cur = null, prev = null;
   for (const l of lines) {
@@ -727,7 +744,7 @@ function splitNames(lines) {            // lines: [{y,str}] urut dari atas ke ba
     if (baru) { cur = s; out.push(s); out[out.length - 1] = s; } else { cur += ' ' + s; out[out.length - 1] = cur; }
     prev = l;
   }
-  return out;
+  return rapikanNama(out);
 }
 function toLines(items) {                 // potongan teks -> baris visual (atas ke bawah)
   const it = items.slice().sort((a, b) => b.y - a.y || a.x - b.x), lines = [];
@@ -908,7 +925,7 @@ function tipeKolom(h){const t=kunci(h);if(!t)return"";
  if(/fakultas|sekolah|prodi|program studi/.test(t))return"fak";
  if(t==="nama")return"nama";
  return""}
-const pecahDosen=v=>String(v==null?"":v).split(/\n|;|\s\/\s/).map(x=>x.replace(/^\s*\d+[.)]\s+/,"").replace(/\s+/g," ").trim()).filter(x=>x&&!/^[-\u2013\u2014]$/.test(x));
+const pecahDosen=v=>rapikanNama(String(v==null?"":v).split(/\n|;|\s\/\s/).map(x=>x.replace(/^\s*\d+[.)]\s+/,"").replace(/\s+/g," ").trim()).filter(x=>x&&!/^[-\u2013\u2014]$/.test(x)));
 function bacaSheet(rows){
  let h=-1,tp=null;
  for(let i=0;i<Math.min(rows.length,40);i++){const t=rows[i].map(tipeKolom),has=x=>t.includes(x);
@@ -1104,7 +1121,7 @@ $("impGo").onclick=()=>{const sem=$("impSem").value.trim(),per=$("impPer").value
 const bersihDosen=s=>String(s||"").replace(/\s*\((?:Penguji|Pembimbing)[^)]*\)\s*$/i,"").replace(/\s+/g," ").trim();
 function rencanaMhs(rec){
  const g=new Map();
- rec.forEach(r=>{const nama=bersihDosen(r.dosen),k=normNama(nama);if(!k||!r.nim)return;
+ rec.forEach(r=>{const nama=bersihDosen(r.dosen),k=normNama(nama);if(!k||!r.nim||hanyaGelarBelakang(nama)||hanyaGelarDepan(nama))return;
   let o=g.get(k);
   if(!o){const h=cocok(nama);o={nama:nama,roles:{bimb:new Map(),sidang:new Map(),seminar:new Map()},target:h?h.id:"",cocok:!!h};g.set(k,o)}
   {const c0=o.roles[r.role].get(r.nim);if(c0===undefined||(!c0&&r.nama))o.roles[r.role].set(r.nim,r.nama)}});
@@ -1134,7 +1151,7 @@ function ringkasMhs(){const o=mOpt();let b=0,u=0,d=0;
  $("mSum").textContent=d+" dosen dipilih: "+b+" entri pembimbingan dan "+u+" entri penguji akan ditambahkan (yang sudah ada dilewati)."}
 function gambarMhs(){
  $("mList").innerHTML=mplan.map((r,i)=>{const t=[[r.roles.bimb.size,"bimbingan"],[r.roles.sidang.size,"sidang"],[r.roles.seminar.size,"seminar"]].filter(x=>x[0]).map(x=>x[0]+" "+x[1]).join(" • ");
-  return'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div><b>'+esc(r.nama)+'</b> <span class="muted">— '+t+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>'}).join("");
+  return'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div title="'+esc(r.nama)+'"><b>'+esc(namaTampil(r.nama))+'</b> <span class="muted">— '+t+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>'}).join("");
  ringkasMhs()}
 function bukaMhs(mh,nama){
  mplan=rencanaMhs(mh.records);
