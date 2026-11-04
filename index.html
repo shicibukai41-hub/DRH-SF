@@ -121,15 +121,14 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 <div id="pbList" style="max-height:42vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px;font-size:13px"></div>
 <div class="dact"><button type="button" class="btn" id="pbCancel">Batal</button><button type="button" class="btn primary" id="pbGo">Impor data baru</button></div></form></dialog>
 <dialog id="dlgMhs" style="width:min(900px,96vw)"><form id="frmMhs" method="dialog">
-<h3>Impor pembimbingan &amp; penguji mahasiswa dari file SK (PDF / Excel)</h3><div class="dsub" id="mInfo"></div>
+<h3 id="mTitle">Impor dari file SK (PDF / Excel)</h3><div class="dsub" id="mInfo"></div>
 <div style="display:grid;gap:6px;margin:10px 0">
 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mBim" style="width:auto"><span>Pembimbingan mahasiswa<span class="muted" id="mBimN"></span></span></label>
-<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mSid" style="width:auto"><span>Penguji sidang, dimasukkan ke Penguji mahasiswa<span class="muted" id="mSidN"></span></span></label>
+<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mSid" style="width:auto"><span>Penguji sidang (ketua &amp; anggota), dimasukkan ke Penguji mahasiswa<span class="muted" id="mSidN"></span></span></label>
 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mSem" style="width:auto"><span>Penilai seminar, dimasukkan ke Penguji mahasiswa<span class="muted" id="mSemN"></span></span></label>
 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mJen" style="width:auto" checked><span>Isi jenjang (S1/S2/S3) otomatis dari angka pertama NIM</span></label></div>
-<div class="toolbar" style="margin:8px 0 6px;align-items:center"><span class="muted">Dosen yang belum cocok dengan profil:</span><button type="button" class="btn sm" id="mSkip">Semua lewati</button><button type="button" class="btn sm" id="mNew">Semua buat profil baru</button></div>
-<div id="mList" style="max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
-<div class="muted" id="mSum" style="margin-top:8px"></div>
+<div id="mSecB" style="margin-top:10px"><div class="toolbar" style="margin:8px 0 6px;align-items:center"><b>Pembimbingan mahasiswa</b><span class="muted" id="mNoteB"></span><button type="button" class="btn sm" id="mSkipB">Semua lewati</button><button type="button" class="btn sm" id="mNewB" title="Hanya untuk nama yang lengkap; nama terpotong / hanya gelar tidak dibuatkan profil">Semua buat profil baru</button></div><div id="mListB" style="max-height:26vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div><div class="muted" id="mSumB" style="margin-top:6px"></div></div>
+<div id="mSecU" style="margin-top:10px"><div class="toolbar" style="margin:8px 0 6px;align-items:center"><b>Penguji sidang / penilai seminar</b><span class="muted" id="mNoteU"></span><button type="button" class="btn sm" id="mSkipU">Semua lewati</button><button type="button" class="btn sm" id="mNewU" title="Hanya untuk nama yang lengkap; nama terpotong / hanya gelar tidak dibuatkan profil">Semua buat profil baru</button></div><div id="mListU" style="max-height:26vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div><div class="muted" id="mSumU" style="margin-top:6px"></div></div>
 <div class="dact"><button type="button" class="btn" id="mCancel">Batal</button><button type="button" class="btn primary" id="mGo">Impor</button></div></form></dialog>
 <script>
 const DATA={"name": "Dr. apt. Rika Hartati, S.Si., M.Si.", "nip": "", "institution": "Institut Teknologi Bandung", "school": "Sekolah Farmasi", "sheets": [{"name": "DRH", "rows": [["LAMPIRAN I PERATURAN SENAT AKADEMIK", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["INSTITUT TEKNOLOGI BANDUNG", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["NOMOR", "", ": 05/IT1.SA/PER/2025", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["RIWAYAT HIDUP", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Dokumen riwayat hidup ini saya susun dengan penuh tanggung jawab, kesungguhan dan sebenar-benarnya, sebagai bagian dari proses dari kenaikan jabatan akademik. Setip informasi yang saya tulis merupakan cerminan integritas pribadi dan profesionalisme sebagai insan akademik.", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Nama lengkap dan gelar", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Tempat/tanggal lahir", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "NIP/Nopeg", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Fakultas/Sekolah", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Tanggal pengangkatan sebagai dosen tetap ITB", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Kelompok Keahlian/Keilmuan", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Bidang Keahlian sesuai peta jalan KK", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Sertifikat dosen profesional", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["", "• Nomor", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["", "• Tanggal/tahun", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Jabatan Fungsional Saat Ini", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["•", "Jabatan Fungsional yang Diusulkan", "", "", "", "", ":", "", "", "", "", "", "", "", "", "", "", ""], ["I. RIWAYAT PENDIDIKAN FORMAL", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Jenjang Pendidikan", "", "Nama Perguruan Tinggi", "", "", "Negara Perguruan Tinggi", "", "", "Tahun Lulus", "Gelar", "Bidang", "", "", "", "", "", ""], ["1", "S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["II. RIWAYAT KEPANGKATAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Pangkat", "", "", "", "", "Golongan", "", "", "", "", "TMT (Terhitung Mulai Tanggal)", "", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["III. RIWAYAT JABATAN AKADEMIK DOSEN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Jabatan", "", "", "", "", "", "", "", "TMT (Terhitung Mulai Tanggal)", "", "", "", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["IV. RIWAYAT KERJA INSTITUSIONAL DI ITB DAN PENUGASAN LUAR ITB (sejak menjadi dosen ITB)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Jabatan", "", "", "", "", "", "Institusi", "", "", "", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["V. KEGIATAN PENDIDIKAN DAN PENGAJARAN PADA JABATAN AKADEMIK", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1. Pendidikan/Pengajaran (disusun urut per semester pertahun)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.1.1. Jenjang S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "", "", "", "Fakultas/Sekolah", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.1.2. Jenjang S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "", "", "", "Fakultas/Sekolah", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.1.3. Jenjang S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "", "", "", "Fakultas/Sekolah", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.2. Sejak kenaikan jabatan terakhir", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.2.1. Jenjang S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "Semester/Tahun", "", "Fakultas/Sekolah", "", "Bukti dokumen (SK Dekan dan hasil kuesioner perkuliahan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.2.2. Jenjang S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "Semester/Tahun", "", "Fakultas/Sekolah", "", "Bukti dokumen (SK Dekan dan hasil kuesioner perkuliahan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.1.2.3. Jenjang S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kode dan Nama Mata Kuliah/Praktikum/Studio", "", "", "", "", "", "", "", "Semester/Tahun", "", "Fakultas/Sekolah", "", "Bukti dokumen (SK Dekan dan hasil kuesioner perkuliahan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2. Pembimbingan (disusun urut per semester per tahun)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Jenjang", "", "", "", "", "", "Jumlah mahasiswa", "", "", "", "", "", "", "", "", "", ""], ["1", "S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2.2. Sejak kenaikan jabatan terakhir", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2.2.1. Pembimbingan mahasiswa S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Mahasiswa", "", "", "NIM", "", "Fakultas/Sekolah", "", "Perguruan Tinggi", "", "Tahun Lulus (sem.)", "Peranan (ketua/ko-pembimbing)", "", "Bukti dokumen (SK Dekan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2.2.2. Pembimbingan mahasiswa S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Mahasiswa", "", "", "NIM", "", "Fakultas/Sekolah", "", "Perguruan Tinggi", "", "Tahun Lulus (sem.)", "Peranan (ketua/ko-pembimbing)", "", "Bukti dokumen (SK Dekan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.2.2.3. Pembimbingan mahasiswa S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["a. Pembimbingan yang telah selesai", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Mahasiswa", "", "", "NIM", "", "Fakultas/Sekolah", "", "Perguruan Tinggi", "", "Tahun Lulus (sem.)", "Peranan (ketua/ko-pembimbing)", "", "Bukti dokumen (SK Dekan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["b. Pembimbingan pada penelitian tahap III", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Mahasiswa", "", "", "NIM", "", "Fakultas/Sekolah", "", "Perguruan Tinggi", "", "Tahun Lulus (sem.)", "Peranan (ketua/ko-pembimbing)", "", "Bukti dokumen (SK Dekan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.3. Penguji Mahasiswa", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.3.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Jenjang", "", "", "", "", "", "", "Jumlah mahasiswa yang diuji", "", "", "", "", "", "", "", "", ""], ["1", "S1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "S2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "S3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["5.3.2. Sejak kenaikan jabatan terakhir", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Jenjang", "Nama Mahasiswa/NIM", "", "", "", "", "Fakultas/Sekolah", "", "Perguruan Tinggi", "", "", "Tahun Lulus (sem.)", "Bukti dokumen (SK Dekan)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["VI. DAFTAR BUKU/MATERI AJAR PADA JABATAN AKADEMIK (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Penyusun", "", "", "Judul", "", "", "", "", "Tempat dan tahun publikasi", "", "", "Penerbit", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["VII. DAFTAR PUBLIKASI (sejak kenaikan jabatan terakhir)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["7.1. Syarat sesuai Keputusan Menteri tentang Pedomoan Operasional Kenaikan Jabatan Akademik Dosen yang berlaku", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Penulis", "", "", "Judul artikel", "", "", "", "Nama jurnal; No. Publikasi; Vol./tahun; ISSN; Tanggal; dan peringkat akreditasi; link", "", "", "Peranan (penulis pertama, corresponding author, penulis anggota)", "", "Bukti dokumen (artikel, informasi jurnal, kinerja jurnal, turnitin dan bukti korespondensi)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["7.2. Syarat sesuai Peraturan Senat Akademik ITB yang berlaku", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Penulis", "", "", "Judul artikel", "", "", "", "Nama jurnal; No. Publikasi; Vol./tahun; ISSN; Tanggal; dan peringkat akreditasi; link", "", "", "Peranan (penulis pertama, corresponding author, penulis anggota)", "", "Bukti dokumen (artikel, informasi jurnal, kinerja jurnal, turnitin dan bukti korespondensi)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["7.3. Untuk dosen bidang ilmu seni rupa, desain, dan arsitektur, butir 7.1-7.2 diganti dengan 7.3.1-7.3.2.\n(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["7.3.1. Syarat sesuai Keputusan Menteri tentang Pedoman Operasional Kenaikan Jabatan Akademik yang berlaku", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Tim Peneliti", "", "", "Judul Karya (karya seni, desain atau karya arsitektur)", "", "", "", "", "", "", "Nama pemeran; Tempat dan tahun penyelenggaraan", "", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["7.3.2. Syarat tambahan senat akademik ITB", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Tim Peneliti", "", "", "Judul Karya", "", "", "", "", "", "", "Nama pemeran; Tempat dan tahun penyelenggaraan", "", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["VIII. KEGIATAN ILMIAH", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["8.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Level kegiatan", "", "", "", "", "", "", "", "Jumlah", "", "", "", "", "", "", "", ""], ["1", "Regional", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "Nasional", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "Internasional", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["8.2. Sejak kenaikan jabatan terakhir", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "", "Level (regional, nasional atau internasional", "", "Tempat, Tahun", "", "Peranan (peserta, narasumber, pembicara dan lainnya)", "", "Bukti dokumen (sertifikat, surat keterangan atau sejenisnya)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["IX. KEGIATAN HIBAH PENELITIAN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["9.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Level Kegiatan", "", "", "", "", "", "", "", "Jumlah", "", "", "", "", "", "", "", ""], ["1", "Regional/ITB", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "Nasional", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "Internasional", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["4", "Kerja sama dengan lembaga lain", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["9.2. Sejak kenaikan jabatan terakhir\n(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Tim Peneliti", "", "", "Peranan (ketua atau anggota)", "", "Judul Penelitian", "", "", "Level", "", "Tahun/Periode", "", "Bukti dokumen (surat keterangan atau kontrak)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["X. KEGIATAN PENGABDIAN KEPADA MASYARAKAT", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["10.1. Sejak menjadi dosen", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Peran dalam kegiatan", "", "", "", "", "", "", "", "Jumlah", "", "", "", "", "", "", "", ""], ["1", "Ketua", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "Anggota", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["10.2. Sejak kenaikan jabatan terakhir\n(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Tim Peneliti", "", "", "Peranan (Ketua/anggota/instruktur/tenaga ahli atau lainnya)", "", "Nama Kegiatan", "", "", "Tempat", "", "", "Tahun", "Bukti dokumen (surat keterangan atau kontrak)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XI. KARYA BERMANFAAT (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(HAKI, Paten, Prototipe, Karya-karya perancangan, dan karya sejenis lainnya)\n(nama pengusul ditebalkan)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Tim", "", "", "Jenis Karya", "", "Judul Karya", "", "", "", "Nama Karya", "", "Tahun", "Keterangan", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XII. KEGIATAN PENGEMBANGAN INSTITUSI (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(termasuk keterlibatan dalam satgas dan panitia adhoc lainnya, termasuk anggota tim revisi kurikulum; atau anggota GKM prodi atau F/S; atau anggota Advisory Board bidang Pendidikan di luar ITB; atau menjadi angota tim kajian akademik di asosiasi profesi)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["12.1. Tingkat Program Studi", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "", "", "", "", "Peranan (ketua/anggota/lainnya)", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["12.2. Tingkat Fakultas/Sekolah", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "", "", "", "", "Peranan (ketua/anggota/lainnya)", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["12.3. Tingkat ITB", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "", "", "", "", "Peranan (ketua/anggota/lainnya)", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XIII. KEGIATAN PEMBIMBINGAN KEMAHASISWAAN (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(hanya untuk pengusul yang mengajukan kenaikan jabatan ke Lektor Kepala dan Profesor)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Diurutkan menurut semester/tahunnya", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "", "", "", "", "", "Semester/Tahun", "", "Bukti dokumen (SK atau bukti sejenisnya)", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XIV. KEGIATAN PEMBIMBINGAN DOSEN MUDA (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(hanya untuk pengusul yang mengajukan jabatan ke Profesor)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Diurutkan  menurut semester/tahunnya", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama/NIP Dosen muda yang dibimbing", "", "", "", "", "", "Semester/Tahun", "", "", "Bukti dokumen (SK atau bukti sejenisnya) dan bukti kegiatan Tridharma PT yang dilakukan bersama", "", "", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XV. RIWAYAT SEBAGAI REVIEWER (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["(Jurnal, proposal penelitian, asesor, evaluator, dan kegiatan lain sejenis)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Kegiatan", "", "", "", "", "Peran", "", "", "Institusi", "", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XVI. RIWAYAT PENDIDIKAN NON-FORMAL DAN PELATIHAN (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Pendidikan/Pelatihan", "", "", "", "Institusi/Perguruan Tinggi", "", "", "Negara Institusi/Perguruan Tinggi", "", "", "Tahun Lulus", "Gelar", "Bidang", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XVII. PENGHARGAAN (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Nama Penghargaan", "", "", "", "", "", "", "Pemberi Penghargaan", "", "", "", "", "Tahun", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XVIII. JEJARING KERJA SAMA YANG SUDAH DIBANGUN (sejak menjadi dosen)", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["No.", "Kegiatan", "", "", "", "", "", "", "Tempat", "", "", "Tahun", "Keterangan", "", "", "", "", ""], ["1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["XIX. PERNYATAAN ETIKA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Dengan ini saya menyatakan bahwa saya saat ini tidak sedang terkena sanksi pelanggaran disiplin pegawai dan/atau pelanggaran kode etik dosen.", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "Diverifikasi oleh", "", "", "", "", "", "", "", ""], ["", "", "Bandung,", "", "", "", "", "", "", "Wakil Dekan Sumber Daya Manusia", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "Sekolah Farmasi", "", "", "", "", "", "", "", ""], ["", "", "Nama", "", "", "", "", "", "", "Dr. apt. Rika Hartati, S.Si., M.Si.", "", "", "", "", "", "", "", ""], ["", "", "NIP", "", "", "", "", "", "", "NIP. 19820814 201012 2 004", "", "", "", "", "", "", "", ""]]}]};
@@ -281,7 +280,8 @@ function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
  const pages=Math.max(1,Math.ceil(list.length/PG)),p=Math.min(Math.max(1,pg[key]||1),pages);pg[key]=p;
  const off=(p-1)*PG,part=list.slice(off,off+PG);
  const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th>${esc(c.bg||c.f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
- return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></div>${tbl}</div>`}
+ const imp=s==="teaching"&&["mk","bimb","uji"].includes(k)?`<button type="button" class="btn sm" data-imp="${k}" title="Impor ${esc(T.name)} dari file SK (PDF / Excel)">\u2b06 Impor</button><button type="button" class="btn sm" data-tpl="${k}" title="Unduh contoh format Excel untuk impor ${esc(T.name)}">\u2b07 Template</button>`:"";
+ return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${imp}<button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></span></div>${tbl}</div>`}
 function renderSec(s){$("e-"+s).innerHTML=Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
 const SECL=["profile","career","research","teaching","community","activities","awards"];
 const normV=v=>Object.keys(v||{}).filter(k=>k!=="peran").sort().map(k=>String(v[k]||"").toLowerCase().replace(/\s+/g," ").trim()).join("|");
@@ -791,7 +791,7 @@ function parseMahasiswa(pages) {
     for (const p of P) {
       const nimH = p.find(i => i.str.trim() === 'NIM');                      // baris judul kolom: harus ada "NIM" di baris yang sama
       if (!nimH) continue;
-      const hs = p.filter(i => Math.abs(i.y - nimH.y) < 4 && /^(Ketua\s+)?(Penguji|Penilai|Pembimbing)(\s+\w+)?$/i.test(i.str.trim()) && roleOf(i.str));
+      const hs = p.filter(i => Math.abs(i.y - nimH.y) < 4 && /^((Ketua|Anggota|Sekretaris)\s+)?(Penguji|Penilai|Pembimbing)(\s+\w+)?$/i.test(i.str.trim()) && roleOf(i.str));
       if (hs.length >= 2) {
         heads = hs.sort((a, b) => a.x - b.x).map(h => ({ x: h.x, role: roleOf(h.str), label: h.str.trim() }));
         const pr = p.find(i => /^Fakultas/i.test(i.str.trim()) && Math.abs(i.y - nimH.y) < 4); prodiX = pr ? pr.x : heads[0].x - 90;
@@ -875,17 +875,48 @@ function parseMahasiswa(pages) {
 
 /* --- pencocokan nama dosen & penyimpanan --- */
 const gelar=/^(?:(?:prof|drs|dra|drg|dr|ir|apt|hj|h|rer|nat)\.?\s+)+/i;
-const normNama=s=>String(s||"").replace(/\s+-\s+.*$/,"").split(",")[0].replace(/\(.*?\)/g," ").toLowerCase().replace(gelar,"").replace(/\./g," ").replace(/\s+/g," ").trim();
+const normNama=s=>String(s||"").replace(/\s*\n\s*/g," ").replace(/\s+-\s+.*$/,"").split(",")[0].replace(/\(.*$/,"").toLowerCase().replace(/\.(?=[a-z])/g,". ").replace(gelar,"").replace(/\./g," ").replace(/\s+/g," ").trim();
 const bersih=s=>String(s||"").replace(/\s*\*+\s*$/,"").replace(/\s+/g," ").trim();
 function cocok(nama){const n=normNama(nama);if(!n)return null;
  const h=dosens.find(d=>normNama(d.nama)===n);if(h)return h;
  const t=n.split(" ");
  if(t.length>=2){const c=dosens.filter(d=>{const u=normNama(d.nama).split(" ");return u.length>=2&&(t.every(w=>u.includes(w))||u.every(w=>t.includes(w)))});if(c.length===1)return c[0]}
  return null}
-function rencana(dosenPdf){return dosenPdf.map(p=>{const seen=new Map();
+
+/* status nama: "gelar" = hanya gelar (nama hilang), "pendek" = 1 kata (mungkin terpotong), "ok" = lengkap */
+function statusNama(n){const t=String(n||"").replace(/\s+/g," ").trim();
+ if(!tokNama(t).length||hanyaGelarBelakang(t)||hanyaGelarDepan(t))return"gelar";
+ return normNama(t).split(" ").filter(Boolean).length<2?"pendek":"ok"}
+const tokInti=n=>normNama(n).split(" ").filter(Boolean);
+/* nama terpotong digabung ke nama lengkap bila TEPAT satu kandidat (awalan/akhiran yang sama) */
+function satukanPecahan(arr,gabung){
+ let ulang=true;
+ while(ulang){ulang=false;
+  for(const a of arr){if(a.cocok||statusNama(a.nama)==="gelar")continue;
+   const ta=tokInti(a.nama);if(!ta.length)continue;
+   const c=arr.filter(b=>{if(b===a||statusNama(b.nama)==="gelar")return false;const tb=tokInti(b.nama);if(tb.length<=ta.length)return false;
+    return ta.every((w,i)=>tb[i]===w)||ta.every((w,i)=>tb[tb.length-ta.length+i]===w)});
+   if(c.length===1){gabung(c[0],a);arr.splice(arr.indexOf(a),1);ulang=true;break}}}
+ return arr}
+function saranProfil(nama){const ta=tokInti(nama);if(!ta.length)return[];
+ return dosens.filter(d=>{const tb=tokInti(d.nama);return tb.length>=ta.length&&ta.every(w=>tb.includes(w))}).slice(0,3).map(d=>d.id)}
+const urutPlan=(a,b)=>(b.cocok-a.cocok)||((a.status==="ok"?0:1)-(b.status==="ok"?0:1))||a.nama.localeCompare(b.nama);
+function infoDosen(r,teks,contoh){const ket=[];
+ if(r.status==="gelar")ket.push('<span style="color:#b45309;font-weight:600">\u26a0 hanya gelar, nama tidak terbaca</span>');
+ else if(r.status==="pendek"&&!r.cocok)ket.push('<span style="color:#b45309;font-weight:600">\u26a0 nama hanya 1 kata, periksa apakah terpotong</span>');
+ if(r.asal&&r.asal.length)ket.push("digabung dengan "+r.asal.length+" penulisan lain");
+ if(r.cocok)ket.push("cocok dengan profil");
+ let h='<div title="'+esc([r.nama].concat(r.asal||[]).join("  |  "))+'"><b>'+esc(r.nama)+'</b> <span class="muted">\u2014 '+teks+(ket.length?" \u2022 "+ket.join(" \u2022 "):"")+'</span>';
+ if(contoh&&contoh.length&&(r.status!=="ok"&&!r.cocok))h+='<div class="muted" style="font-size:12px">mis. '+contoh.map(c=>esc(c)).join("; ")+'</div>';
+ return h+'</div>'}
+function rencana(dosenPdf){
+ const arr=dosenPdf.map(p=>{const seen=new Map();
   p.matakuliah.forEach(m=>{const key=(m.sem||"")+"|"+(m.kode||bersih(m.nama));if(m.kode||m.nama)if(!seen.has(key))seen.set(key,{kode:m.kode||"",nama:bersih(m.nama),sem:m.sem||"",jenjang:m.jenjang||"",fak:m.fak||""})});   // beberapa kelas = satu matakuliah
-  const h=cocok(p.nama);return{nama:p.nama,mk:[...seen.values()],target:h?h.id:"",cocok:!!h}})
-  .filter(r=>r.mk.length).sort((a,b)=>b.cocok-a.cocok)}
+  const st=statusNama(p.nama),h=st==="gelar"?null:cocok(p.nama);
+  return{nama:p.nama,mk:[...seen.values()],target:h?h.id:"",cocok:!!h,status:st,asal:[]}}).filter(r=>r.mk.length);
+ satukanPecahan(arr,(to,from)=>{const k=x=>(x.sem||"")+"|"+(x.kode||x.nama),have=new Set(to.mk.map(k));from.mk.forEach(x=>{if(!have.has(k(x))){have.add(k(x));to.mk.push(x)}});to.asal.push(from.nama)});
+ arr.forEach(r=>{r.saran=r.cocok||r.status==="gelar"?[]:saranProfil(r.nama)});
+ return arr.sort(urutPlan)}
 function semesterDari(pages,namaFile){
  const teks=pages.slice(0,2).map(p=>p.map(i=>i.str).join("")).join(" ");
  let m=teks.match(/SEMESTER\s*([IVX]+|\d)\s*[\u2013\-]\s*(\d{4})\s*\/\s*(\d{4})/i);
@@ -897,6 +928,7 @@ function terapkan(plan,sem,periode){
  let tambah=0,lewat=0,baru=0;
  plan.forEach(r=>{if(r.target==="")return;
   let id=r.target;
+  if(id==="__new"&&r.status==="gelar")return;
   if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
   const ada=new Set();
   entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk"&&((e.v.periode==="Sejak menjadi dosen")===awal)).forEach(e=>{
@@ -908,7 +940,6 @@ function terapkan(plan,sem,periode){
  persist();refresh();return{tambah,lewat,baru}}
 window.imporSK={parseSK,rencana,semesterDari,terapkan,parseMahasiswa,rencanaMhs,terapkanMhs,bukaMhs};
 /* --- pembaca Excel (.xlsx / .xls / .csv): kolom dikenali dari judul kolom --- */
-let pendingMhs=null;
 const sel=v=>String(v==null?"":v).replace(/\s+/g," ").trim();
 const kunci=t=>sel(t).toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 function peranDari(t){t=kunci(t);if(/seminar|penilai/.test(t))return"seminar";if(/sidang|penguji|ujian/.test(t))return"sidang";return"bimb"}
@@ -916,7 +947,8 @@ function tipeKolom(h){const t=kunci(h);if(!t)return"";
  if(/^(peran|peranan|role|sebagai|jenis penugasan)$/.test(t))return"peran";
  if(/^(nim|nomor induk|no induk|nomor induk mahasiswa)$/.test(t))return"nim";
  if(/nama (mahasiswa|mahasiswi|mhs|siswa|peserta)|^(mahasiswa|mahasiswi|mhs|student|name|nama lengkap|nama lengkap mahasiswa|peserta)$|mahasiswa yang|student name/.test(t))return"mhs";
- if(/pembimbing|penguji|penilai|promotor/.test(t))return"role";
+ if(/utama (dan |atau )?serta/.test(t))return"stat";
+ if(/pembimbing|penguji|penilai|promotor|(ketua|anggota|sekretaris) (sidang|ujian)/.test(t))return"role";
  if(/kode/.test(t))return/(dan|nama)/.test(t)?"mk":"kode";
  if(/mata ?kuliah|matakuliah|^mk$|nama mk|nama kuliah|praktikum/.test(t))return"mk";
  if(/dosen|pengampu|pengajar|staf/.test(t))return"dosen";
@@ -925,7 +957,10 @@ function tipeKolom(h){const t=kunci(h);if(!t)return"";
  if(/fakultas|sekolah|prodi|program studi/.test(t))return"fak";
  if(t==="nama")return"nama";
  return""}
-const pecahDosen=v=>rapikanNama(String(v==null?"":v).split(/\n|;|\s\/\s/).map(x=>x.replace(/^\s*\d+[.)]\s+/,"").replace(/\s+/g," ").trim()).filter(x=>x&&!/^[-\u2013\u2014]$/.test(x)));
+const pecahDosen=v=>{const t=String(v==null?"":v);   /* satu sel = satu nama; baris baru hanya lanjutan (hasil convert PDF). Beberapa nama hanya bila dipisah ";", " / " atau daftar bernomor */
+ const bernomor=(t.match(/(?:^|\n)\s*\d+[.)]\s+\S/g)||[]).length>=2;
+ const bagian=bernomor?t.split(/\n\s*(?=\d+[.)]\s)/):t.split(/;|\s\/\s/);
+ return rapikanNama(bagian.map(x=>x.replace(/^\s*\d+[.)]\s+/,"").replace(/\s*\n\s*/g," ").replace(/\s+/g," ").trim()).filter(x=>x&&!/^[-\u2013\u2014]$/.test(x)))};
 function bacaSheet(rows){
  let h=-1,tp=null;
  for(let i=0;i<Math.min(rows.length,40);i++){const t=rows[i].map(tipeKolom),has=x=>t.includes(x);
@@ -939,10 +974,12 @@ function bacaSheet(rows){
    const v=data.map(r=>sel(r[i])).filter(Boolean);
    if(v.length&&v.filter(x=>/[A-Za-z]{2,}/.test(x)&&!/\d{4,}/.test(x)&&x.length<60).length>=v.length*0.8)mC=i});
   const roles=[];tp.forEach((x,i)=>{if(x==="role")roles.push({i:i,role:peranDari(rows[h][i])})});
-  const dC=col("dosen"),pC=col("peran"),rec=[];let lastD="";
-  data.forEach(r=>{const nim=sel(r[nimC]).replace(/\s/g,"").replace(/\.0$/,"");if(!/^\d{6,}$/.test(nim))return;
-   const nama=mC>=0?sel(r[mC]):"";
-   roles.forEach(o=>pecahDosen(r[o.i]).forEach(d=>rec.push({dosen:d,nim:nim,nama:nama,role:o.role})));
+  const dC=col("dosen"),pC=col("peran"),rec=[];let lastD="",lastNim="",lastNama="";
+  data.forEach(r=>{let nim=sel(r[nimC]).replace(/\s/g,"").replace(/\.0$/,""),nama=mC>=0?sel(r[mC]):"";
+   if(/^\d{6,}$/.test(nim)){lastNim=nim;lastNama=nama}
+   else if(nim===""&&lastNim){nim=lastNim;nama=nama||lastNama}      /* sel NIM digabung ke bawah: baris ini milik mahasiswa di atasnya */
+   else return;
+   roles.forEach(o=>pecahDosen(r[o.i]).filter(d=>!JUNK.test(d)&&kunci(d)!==kunci(rows[h][o.i])).forEach(d=>rec.push({dosen:d,nim:nim,nama:nama,role:o.role})));
    if(dC>=0){const v=sel(r[dC]);if(v)lastD=v;
     const dd=v?pecahDosen(r[dC]):(roles.length?[]:pecahDosen(lastD)),role=pC>=0&&sel(r[pC])?peranDari(r[pC]):"bimb";
     dd.forEach(d=>rec.push({dosen:d,nim:nim,nama:nama,role:role}))}});
@@ -951,60 +988,65 @@ function bacaSheet(rows){
  let kC=col("kode"),mC=col("mk"),dC=col("dosen");const nC=col("nama"),sC=col("sem"),jC=col("jenjang"),fC=col("fak");
  if(nC>=0){if(mC<0)mC=nC;else if(dC<0)dC=nC}
  if(mC<0&&kC<0)return null;
- const grup=new Map();let lastD="",lastS="";
- data.forEach(r=>{const dn0=dC>=0?sel(r[dC]):"";if(dn0)lastD=dn0;
+ const grup=new Map();let lastDs=[],lastS="";
+ data.forEach(r=>{if(dC>=0&&sel(r[dC])){const pd=pecahDosen(r[dC]);lastDs=pd.length?pd:[sel(r[dC])]}
   const sm0=sC>=0?sel(r[sC]):"";if(sm0)lastS=sm0;
   let kode=kC>=0?sel(r[kC]):"",nama=mC>=0?sel(r[mC]):"";
   if(!kode&&nama){const m=nama.match(/^([A-Za-z]{2,4}\s?\d{3,4}[A-Za-z]?)\s*[-\u2013:]?\s+(.+)$/);if(m){kode=m[1].replace(/\s/g,"");nama=m[2]}}
   if(!kode&&!nama)return;
   if(!nama)nama=kode;
-  const dn=dC>=0?lastD:"",jm=jC>=0?sel(r[jC]).toUpperCase().match(/S[123]/):null;
+  const dns=dC>=0&&lastDs.length?lastDs:[""],jm=jC>=0?sel(r[jC]).toUpperCase().match(/S[123]/):null;
   const o={kode:kode,nama:nama,sem:sC>=0?lastS:"",jenjang:jm?jm[0]:"",fak:fC>=0?sel(r[fC]):""};
-  if(!grup.has(dn))grup.set(dn,{nama:dn,matakuliah:[]});grup.get(dn).matakuliah.push(o)});
+  dns.forEach(dn=>{if(!grup.has(dn))grup.set(dn,{nama:dn,matakuliah:[]});grup.get(dn).matakuliah.push({...o})})});
  return{jenis:"mk",dosen:[...grup.values()]}}
-async function imporExcel(f){
+let impMode="mk";
+const NAMA_MODE={mk:"mata kuliah",bimb:"pembimbingan mahasiswa",uji:"penguji mahasiswa"};
+async function imporExcel(f,mode){
  if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
  try{
   toast("Membaca Excel\u2026");
-  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),mkMap=new Map(),rec=[];
+  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),mkMap=new Map();let rec=[];
   wb.SheetNames.forEach(n=>{const r=bacaSheet(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""}));if(!r)return;
    if(r.jenis==="mhs"){rec.push(...r.rec);return}
    r.dosen.forEach(g=>{const k=normNama(g.nama);if(!mkMap.has(k))mkMap.set(k,{nama:g.nama,matakuliah:[]});mkMap.get(k).matakuliah.push(...g.matakuliah)})});
-  const mhObj=rec.length?{jenis:"baris",records:rec}:null;
-  if(!mkMap.size&&!mhObj){toast("Kolom tidak dikenali. Butuh kolom NIM + Dosen/Pembimbing/Penguji, atau Kode/Nama Mata Kuliah. Pakai tombol Template Excel sebagai contoh.");return}
-  if(!mkMap.size){bukaMhs(mhObj,f.name);return}
+  if(mode!=="mk"){
+   if(mode==="uji"&&rec.length&&!rec.some(r=>r.role!=="bimb")&&/penguji|sidang|seminar/i.test(f.name))rec=rec.map(r=>({...r,role:"sidang"}));
+   if(!rec.length){toast("Kolom tidak dikenali. Butuh kolom NIM + "+(mode==="bimb"?"Dosen Pembimbing":"Ketua / Anggota Penguji Sidang")+". Pakai tombol Template sebagai contoh.");return}
+   if(!rec.some(r=>mode==="bimb"?r.role==="bimb":r.role==="sidang")){toast("Tidak ada data "+NAMA_MODE[mode]+" di file ini.");return}
+   bukaMhs({jenis:"baris",records:rec},f.name,mode);return}
+  if(!mkMap.size){toast("Kolom tidak dikenali. Butuh kolom Kode/Nama Mata Kuliah (dan Dosen). Pakai tombol Template sebagai contoh.");return}
   const aktif=dosens.find(d=>d.id===cur)||BASE,tanpa=mkMap.has("")&&!mkMap.get("").nama;
   const ds=[...mkMap.values()].map(g=>g.nama?g:{nama:aktif.nama,matakuliah:g.matakuliah});
   plan=rencana(ds);
-  if(tanpa)plan.forEach(r=>{if(r.nama===aktif.nama){r.target=aktif.id;r.cocok=true}});
-  pendingMhs=mhObj?{mh:mhObj,nama:f.name}:null;
+  if(tanpa)plan.forEach(r=>{if(r.nama===aktif.nama){r.target=aktif.id;r.cocok=true;r.status="ok"}});
   const semAda=plan.every(r=>r.mk.every(m=>m.sem));
   $("impSem").value=semAda?"":semesterDari([],f.name);
-  $("impInfo").textContent=f.name+" \u2014 "+plan.length+" dosen terbaca"+(tanpa?" (kolom dosen tidak ada, dianggap milik "+aktif.nama+")":"")+". "+(semAda?"Semester diambil dari kolom Excel.":"Isi Semester/Tahun untuk baris yang belum punya semester.")+(mhObj?" Data mahasiswa di file ini akan diproses setelah mata kuliah.":"");
+  $("impInfo").textContent=f.name+" \u2014 "+plan.length+" dosen terbaca"+(tanpa?" (kolom dosen tidak ada, dianggap milik "+aktif.nama+")":"")+". "+(semAda?"Semester diambil dari kolom Excel.":"Isi Semester/Tahun untuk baris yang belum punya semester.");
   $("impPer").value="Sejak kenaikan jabatan terakhir";gambar();$("dlgImp").showModal()
  }catch(err){toast("Gagal membaca Excel: "+err.message)}}
-function templateXlsx(){
+function templateXlsx(mode){
  if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
  const aktif=dosens.find(d=>d.id===cur)||BASE,wb=XLSX.utils.book_new();
- const a=XLSX.utils.aoa_to_sheet([["Dosen","Kode MK","Nama Mata Kuliah","Semester/Tahun","Jenjang","Fakultas/Sekolah"],[aktif.nama,"FA1101","Contoh Mata Kuliah","Semester I 2024/2025","S1",aktif.school||""]]);
- a["!cols"]=[{wch:34},{wch:10},{wch:36},{wch:24},{wch:9},{wch:24}];
- const b=XLSX.utils.aoa_to_sheet([["NIM","Nama Mahasiswa","Dosen Pembimbing","Penguji Sidang","Penilai Seminar"],["12345678","Contoh Mahasiswa",aktif.nama,"Nama Dosen A\nNama Dosen B",""]]);
- b["!cols"]=[{wch:12},{wch:28},{wch:34},{wch:34},{wch:34}];
- XLSX.utils.book_append_sheet(wb,a,"Matakuliah");XLSX.utils.book_append_sheet(wb,b,"Mahasiswa");
- XLSX.writeFile(wb,"template-impor-pengajaran.xlsx")}
+ let a,w,nm;
+ if(mode==="bimb"){a=XLSX.utils.aoa_to_sheet([["NIM","Nama Mahasiswa","Dosen Pembimbing"],["12345678","Contoh Mahasiswa",aktif.nama]]);w=[12,28,40];nm="Pembimbingan"}
+ else if(mode==="uji"){a=XLSX.utils.aoa_to_sheet([["NIM","Nama Mahasiswa","Ketua Penguji Sidang","Anggota Penguji Sidang"],["12345678","Contoh Mahasiswa",aktif.nama,"Nama Dosen B\nNama Dosen C"]]);w=[12,28,36,40];nm="Penguji"}
+ else{a=XLSX.utils.aoa_to_sheet([["Dosen","Kode MK","Nama Mata Kuliah","Semester/Tahun","Jenjang","Fakultas/Sekolah"],[aktif.nama,"FA1101","Contoh Mata Kuliah","Semester I 2024/2025","S1",aktif.school||""]]);w=[34,10,36,24,9,24];nm="Matakuliah"}
+ a["!cols"]=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,a,nm);
+ XLSX.writeFile(wb,"template-impor-"+({mk:"matakuliah",bimb:"pembimbingan",uji:"penguji"}[mode]||"matakuliah")+".xlsx")}
 /* --- antarmuka --- */
 let plan=[];
-const opsi=t=>'<option value=""'+(t===""?" selected":"")+'>Lewati</option><option value="__new"'+(t==="__new"?" selected":"")+'>+ Buat profil baru</option>'+dosens.map(d=>'<option value="'+esc(d.id)+'"'+(t===d.id?" selected":"")+'>'+esc(d.nama)+'</option>').join("");
+const opsi=(t,r)=>{const baruOk=!r||r.status!=="gelar",sar=(r&&r.saran)||[];
+ return'<option value=""'+(t===""?" selected":"")+'>Lewati</option>'+sar.map(id=>{const d=dosens.find(x=>x.id===id);return d?'<option value="'+esc(d.id)+'">\u2605 Mungkin: '+esc(d.nama)+'</option>':""}).join("")+(baruOk?'<option value="__new"'+(t==="__new"?" selected":"")+'>+ Buat profil baru</option>':"")+dosens.map(d=>'<option value="'+esc(d.id)+'"'+(t===d.id?" selected":"")+'>'+esc(d.nama)+'</option>').join("")};
 function ringkas(){const a=plan.filter(r=>r.target!=="");
  $("impSum").textContent=a.length+" dosen dipilih, "+a.reduce((s,r)=>s+r.mk.length,0)+" matakuliah akan ditambahkan (duplikat dilewati sesuai periode)."
  const aw=$("impPer").value==="Sejak menjadi dosen";
  $("impPerNote").textContent=aw?"Sejak menjadi dosen: matakuliah yang sama hanya dicatat sekali, jadi dilewati jika sudah ada di semester mana pun. Semester tidak dicatat.":"Sejak kenaikan jabatan terakhir: matakuliah yang sama tetap ditambahkan untuk semester baru; hanya dilewati jika sudah ada di semester yang sama."}
 $("impPer").onchange=()=>ringkas();
-function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div><b>'+esc(r.nama)+'</b> <span class="muted">— '+r.mk.length+' matakuliah'+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>').join("");ringkas()}
-{const h=$("teaching").querySelector("h2");
- h.insertAdjacentHTML("afterend",'<div class="toolbar"><button class="btn" id="bPdf">\ud83d\udcc4 Impor dari PDF atau Excel (matakuliah, pembimbingan, penguji)</button><button class="btn" id="bTpl" title="Unduh contoh format Excel untuk impor">\u2b07 Template Excel</button><input type="file" id="fPdf" accept="application/pdf,.pdf,.xlsx,.xls,.xlsm,.csv" hidden></div>')}
-$("bPdf").onclick=()=>$("fPdf").click();
-$("bTpl").onclick=templateXlsx;
+function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><select data-i="'+i+'">'+opsi(r.target,r)+'</select>'+infoDosen(r,r.mk.length+" matakuliah",r.mk.slice(0,2).map(m=>(m.kode?m.kode+" ":"")+m.nama))+'</div>').join("");ringkas()}
+document.body.insertAdjacentHTML("beforeend",'<input type="file" id="fPdf" hidden>');
+document.addEventListener("click",e=>{const b=e.target.closest("[data-imp],[data-tpl]");if(!b)return;
+ if(b.dataset.tpl){templateXlsx(b.dataset.tpl);return}
+ impMode=b.dataset.imp;$("fPdf").accept=".xlsx,.xls,.xlsm,.csv,.pdf,application/pdf";$("fPdf").click()});
 
 /* ===== Impor Publikasi Jurnal dari Excel (menu Penelitian & Publikasi) =====
    Kolom dikenali dari judul kolom (mis. ekspor Scopus + SJR). Data yang sudah ada di portofolio dosen dilewati. */
@@ -1090,48 +1132,60 @@ $("pbGo").onclick=()=>{if(!pbPlan)return;
  persist();refresh();$("dlgPub").close();pbPlan=null;
  toast(nw.length+" publikasi jurnal diimpor"+(lewat?", "+lewat+" dilewati karena sudah ada":"")+"."+(sync.size?" Disalin juga ke portofolio: "+[...sync].join(", ")+".":"")+(dups.size?" Data sudah ada di portofolio: "+[...dups].join(", ")+" (tidak digandakan).":""))};
 $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
- pendingMhs=null;
- if(/\.(xlsx|xls|xlsm|csv)$/i.test(f.name)){await imporExcel(f);return}
+ const mode=impMode;
+ if(/\.(xlsx|xls|xlsm|csv)$/i.test(f.name)){await imporExcel(f,mode);return}
  if(!window.pdfjsLib){toast("Pembaca PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
  try{
-  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";   /* skrip worker sudah dimuat di halaman, jadi PDF dibaca tanpa worker terpisah */
-  toast("Membaca PDF…");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  toast("Membaca PDF\u2026");
   const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,pages=[];
   for(let i=1;i<=pdf.numPages;i++){const tc=await(await pdf.getPage(i)).getTextContent();pages.push(tc.items.map(t=>({str:t.str,x:t.transform[4],y:t.transform[5],w:t.width})))}
-  const mh=parseMahasiswa(pages);                                      /* PDF daftar mahasiswa (ada NIM)? */
-  if(mh&&mh.records.length>=3){bukaMhs(mh,f.name);return}
+  if(mode!=="mk"){
+   const mh=parseMahasiswa(pages);
+   if(!mh||mh.records.length<3){toast("Daftar mahasiswa (NIM) tidak ditemukan di PDF ini. Pastikan ini SK "+NAMA_MODE[mode]+".");return}
+   bukaMhs(mh,f.name,mode);return}
   const ds=parseSK(pages);
-  if(!ds.length){toast("Tabel penugasan tidak ditemukan di PDF ini.");return}
+  if(!ds.length){toast("Tabel penugasan mata kuliah tidak ditemukan di PDF ini. Pastikan ini SK penugasan mengajar.");return}
   plan=rencana(ds);
   $("impSem").value=semesterDari(pages,f.name);
-  $("impInfo").textContent=f.name+" — "+ds.length+" dosen terbaca. Pilih profil tujuan untuk tiap dosen.";
+  $("impInfo").textContent=f.name+" \u2014 "+ds.length+" dosen terbaca. Pilih profil tujuan untuk tiap dosen.";
   $("impPer").value="Sejak kenaikan jabatan terakhir";gambar();$("dlgImp").showModal()
  }catch(err){toast("Gagal membaca PDF: "+err.message)}};
 $("impList").addEventListener("change",e=>{const s=e.target.closest("select");if(!s)return;plan[+s.dataset.i].target=s.value;ringkas()});
 $("impSkip").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target=""});gambar()};
-$("impNew").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target="__new"});gambar()};
-$("impCancel").onclick=()=>{pendingMhs=null;$("dlgImp").close()};
+$("impNew").onclick=()=>{plan.forEach(r=>{if(!r.cocok&&r.status==="ok")r.target="__new"});gambar()};
+$("impCancel").onclick=()=>$("dlgImp").close();
 $("impGo").onclick=()=>{const sem=$("impSem").value.trim(),per=$("impPer").value;
  if(per!=="Sejak menjadi dosen"&&!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
  if(!plan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
- const r=terapkan(plan,sem,per);$("dlgImp").close();if(pendingMhs){const pm=pendingMhs;pendingMhs=null;setTimeout(()=>bukaMhs(pm.mh,pm.nama),0)}
+ const r=terapkan(plan,sem,per);$("dlgImp").close();
  toast(r.tambah+" matakuliah ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
 
 /* --- impor pembimbingan & penguji mahasiswa --- */
-const bersihDosen=s=>String(s||"").replace(/\s*\((?:Penguji|Pembimbing)[^)]*\)\s*$/i,"").replace(/\s+/g," ").trim();
+const bersihDosen=s=>String(s||"").replace(/\s*\n\s*/g," ").replace(/\s*\(\s*(?:Penguji|Pembimbing)\b.*$/i,"").replace(/\s+-\s+.*$/,"").replace(/\s+/g," ").trim();
 function rencanaMhs(rec){
  const g=new Map();
- rec.forEach(r=>{const nama=bersihDosen(r.dosen),k=normNama(nama);if(!k||!r.nim||hanyaGelarBelakang(nama)||hanyaGelarDepan(nama))return;
+ rec.forEach(r=>{const nama=bersihDosen(r.dosen);if(!r.nim||!tokNama(nama).length)return;
+  const st=statusNama(nama),k=st==="gelar"?"#"+kunci(nama):normNama(nama);if(!k)return;
   let o=g.get(k);
-  if(!o){const h=cocok(nama);o={nama:nama,roles:{bimb:new Map(),sidang:new Map(),seminar:new Map()},target:h?h.id:"",cocok:!!h};g.set(k,o)}
-  {const c0=o.roles[r.role].get(r.nim);if(c0===undefined||(!c0&&r.nama))o.roles[r.role].set(r.nim,r.nama)}});
- return[...g.values()].sort((a,b)=>b.cocok-a.cocok||a.nama.localeCompare(b.nama))}
-function terapkanMhs(pl,o){
+  if(!o){const h=st==="gelar"?null:cocok(nama);o={nama:nama,status:st,roles:{bimb:new Map(),sidang:new Map(),seminar:new Map()},asal:[],target:h?h.id:"",cocok:!!h};g.set(k,o)}
+  const c0=o.roles[r.role].get(r.nim);if(c0===undefined||(!c0&&r.nama))o.roles[r.role].set(r.nim,r.nama)});
+ const arr=[...g.values()];
+ satukanPecahan(arr,(to,from)=>{for(const k in to.roles)from.roles[k].forEach((n,nim)=>{if(!to.roles[k].has(nim)||(!to.roles[k].get(nim)&&n))to.roles[k].set(nim,n)});to.asal.push(from.nama)});
+ arr.forEach(r=>{r.saran=r.cocok||r.status==="gelar"?[]:saranProfil(r.nama)});
+ return arr.sort(urutPlan)}
+/* pisahkan: satu daftar untuk pembimbingan, satu untuk penguji (target profil dipilih sendiri-sendiri) */
+function pisahMhs(arr){
+ const salin=(r,ks)=>{const o={...r,roles:{bimb:new Map(),sidang:new Map(),seminar:new Map()}};ks.forEach(k=>o.roles[k]=r.roles[k]);return o};
+ return{B:arr.filter(r=>r.roles.bimb.size).map(r=>salin(r,["bimb"])),U:arr.filter(r=>r.roles.sidang.size||r.roles.seminar.size).map(r=>salin(r,["sidang","seminar"]))}}
+function terapkanMhs(pl,o,peta){
+ peta=peta||new Map();
  let bimb=0,uji=0,lewat=0,baru=0,isi=0;
  const jenj=nim=>o.jenjang?({"1":"S1","2":"S2","3":"S3"}[String(nim)[0]]||""):"";
  pl.forEach(r=>{if(r.target==="")return;
   let id=r.target;
-  if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
+  if(id==="__new"){if(r.status==="gelar")return;const kk=normNama(r.nama);
+   if(peta.has(kk))id=peta.get(kk);else{const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;peta.set(kk,id);baru++}}
   const ada=t=>new Map(entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type===t).map(e=>[String(e.v.nim||"").trim(),e]));
   const sudah={bimb:ada("bimb"),uji:ada("uji")};
   const tambah=(type,nim,nama)=>{if(sudah[type].has(nim)){const ex=sudah[type].get(nim);if(ex&&nama&&!String(ex.v.nama||"").trim()){ex.v.nama=nama;ex.t=Date.now();isi++}else lewat++;return false}sudah[type].set(nim,null);
@@ -1143,35 +1197,56 @@ function terapkanMhs(pl,o){
   if(o.seminar)r.roles.seminar.forEach((n,k)=>{if(!u.has(k))u.set(k,n)});
   u.forEach((nama,nim)=>{if(tambah("uji",nim,nama))uji++})});
  persist();refresh();return{bimb:bimb,uji:uji,lewat:lewat,baru:baru,isi:isi}}
-let mplan=[];
+let mplanB=[],mplanU=[];
 const mOpt=()=>({bimb:$("mBim").checked,sidang:$("mSid").checked,seminar:$("mSem").checked,jenjang:$("mJen").checked});
-function hitungMhs(r,o){const u=new Set();if(o.sidang)r.roles.sidang.forEach((n,k)=>u.add(k));if(o.seminar)r.roles.seminar.forEach((n,k)=>u.add(k));return{bimb:o.bimb?r.roles.bimb.size:0,uji:u.size}}
-function ringkasMhs(){const o=mOpt();let b=0,u=0,d=0;
- mplan.forEach(r=>{if(r.target==="")return;const h=hitungMhs(r,o);if(h.bimb+h.uji)d++;b+=h.bimb;u+=h.uji});
- $("mSum").textContent=d+" dosen dipilih: "+b+" entri pembimbingan dan "+u+" entri penguji akan ditambahkan (yang sudah ada dilewati)."}
+const ujiSet=(r,o)=>{const u=new Set();if(o.sidang)r.roles.sidang.forEach((n,k)=>u.add(k));if(o.seminar)r.roles.seminar.forEach((n,k)=>u.add(k));return u};
+function ringkasMhs(){const o=mOpt();
+ const hit=(pl,f)=>{let d=0,n=0;pl.forEach(r=>{if(r.target==="")return;const c=f(r);if(c){d++;n+=c}});return[d,n]};
+ const b=hit(mplanB,r=>o.bimb?r.roles.bimb.size:0),u=hit(mplanU,r=>ujiSet(r,o).size);
+ $("mSumB").textContent=o.bimb?b[0]+" dosen dipilih: "+b[1]+" entri pembimbingan akan ditambahkan (yang sudah ada dilewati).":"Pembimbingan tidak dicentang, tidak akan diimpor.";
+ $("mSumU").textContent=(o.sidang||o.seminar)?u[0]+" dosen dipilih: "+u[1]+" entri penguji akan ditambahkan (yang sudah ada dilewati).":"Penguji sidang/seminar tidak dicentang, tidak akan diimpor."}
+const contohMhs=r=>{const m=new Map();["bimb","sidang","seminar"].forEach(k=>r.roles[k].forEach((n,nim)=>{if(m.size<3&&!m.has(nim))m.set(nim,n)}));return[...m].map(([nim,n])=>nim+(n?" "+n:""))};
+function barisMhs(r,i,sec){
+ const t=sec==="B"?[[r.roles.bimb.size,"bimbingan"]]:[[r.roles.sidang.size,"sidang"],[r.roles.seminar.size,"seminar"]];
+ return'<div class="improw"><select data-i="'+i+'" data-s="'+sec+'">'+opsi(r.target,r)+'</select>'+infoDosen(r,t.filter(x=>x[0]).map(x=>x[0]+" "+x[1]).join(" \u2022 "),contohMhs(r))+'</div>'}
 function gambarMhs(){
- $("mList").innerHTML=mplan.map((r,i)=>{const t=[[r.roles.bimb.size,"bimbingan"],[r.roles.sidang.size,"sidang"],[r.roles.seminar.size,"seminar"]].filter(x=>x[0]).map(x=>x[0]+" "+x[1]).join(" • ");
-  return'<div class="improw"><select data-i="'+i+'">'+opsi(r.target)+'</select><div title="'+esc(r.nama)+'"><b>'+esc(namaTampil(r.nama))+'</b> <span class="muted">— '+t+(r.cocok?' • cocok dengan profil':'')+'</span></div></div>'}).join("");
+ [["B",mplanB],["U",mplanU]].forEach(([k,pl])=>{
+  $("mList"+k).innerHTML=pl.map((r,i)=>barisMhs(r,i,k)).join("");
+  $("mSec"+k).style.display=pl.length?"":"none";
+  const w=pl.filter(r=>r.status!=="ok"&&!r.cocok).length;
+  $("mNote"+k).textContent=w?"\u26a0 "+w+" nama tidak lengkap (dilewati kecuali Anda pilih profilnya)":""});
  ringkasMhs()}
-function bukaMhs(mh,nama){
- mplan=rencanaMhs(mh.records);
- const c={bimb:0,sidang:0,seminar:0},nims=new Set(mh.records.map(r=>r.nim)),bernama=new Set(mh.records.filter(r=>String(r.nama||"").trim()).map(r=>r.nim)),tn=[...nims].filter(n=>!bernama.has(n)).length;
- mplan.forEach(r=>{for(const k in c)c[k]+=r.roles[k].size});
- $("mInfo").textContent=nama+" — "+nims.size+" mahasiswa, "+mplan.length+" dosen terbaca. Pilih data yang diimpor dan profil tujuan tiap dosen."+(tn?" PERINGATAN: "+tn+" mahasiswa terbaca tanpa nama (kolom nama tidak terdeteksi di file). Periksa judul kolom nama di file Anda.":"");
- [["mBim","bimb"],["mSid","sidang"],["mSem","seminar"]].forEach(a=>{const el=$(a[0]);el.disabled=!c[a[1]];
-  el.checked=!!c[a[1]]&&(a[1]==="bimb"?mh.jenis==="baris":a[1]==="sidang");
+function bukaMhs(mh,nama,mode){
+ mode=mode||"bimb";
+ const dipakai=r=>mode==="bimb"?r.role==="bimb":r.role==="sidang";
+ if(mode==="uji")mh={...mh,records:mh.records.filter(r=>r.role!=="seminar")};   /* penilai seminar tidak diimpor */
+ const all=rencanaMhs(mh.records),sp=pisahMhs(all);
+ mplanB=mode==="bimb"?sp.B:[];mplanU=mode==="uji"?sp.U:[];
+ if(!(mode==="bimb"?mplanB:mplanU).length){toast("Tidak ada data "+NAMA_MODE[mode]+" di file ini.");return}
+ const rec=mh.records.filter(dipakai),c={bimb:0,sidang:0,seminar:0};
+ const nims=new Set(rec.map(r=>r.nim)),bernama=new Set(rec.filter(r=>String(r.nama||"").trim()).map(r=>r.nim)),tn=[...nims].filter(n=>!bernama.has(n)).length;
+ rec.forEach(r=>{c[r.role]++});
+ const pl=mode==="bimb"?mplanB:mplanU;
+ $("mTitle").textContent="Impor "+NAMA_MODE[mode]+" dari file SK (PDF / Excel)";
+ $("mInfo").textContent=nama+" \u2014 "+nims.size+" mahasiswa, "+pl.length+" dosen terbaca. Pilih profil tujuan tiap dosen."+(tn?" PERINGATAN: "+tn+" mahasiswa terbaca tanpa nama (kolom nama tidak terdeteksi di file). Periksa judul kolom nama di file Anda.":"");
+ [["mBim","bimb"],["mSid","sidang"],["mSem","seminar"]].forEach(a=>{const el=$(a[0]),tampil=a[1]==="bimb"?mode==="bimb":a[1]==="sidang"&&mode==="uji";
+  el.closest("label").style.display=tampil?"":"none";
+  el.disabled=!c[a[1]];el.checked=tampil&&!!c[a[1]]&&(a[1]!=="seminar");
   $(a[0]+"N").textContent=c[a[1]]?" ("+c[a[1]]+" entri)":" (tidak ada di file ini)"});
  gambarMhs();$("dlgMhs").showModal()}
-$("mList").addEventListener("change",e=>{const s=e.target.closest("select");if(!s)return;mplan[+s.dataset.i].target=s.value;ringkasMhs()});
+$("dlgMhs").addEventListener("change",e=>{const s=e.target.closest("#mListB select,#mListU select");if(!s)return;(s.dataset.s==="B"?mplanB:mplanU)[+s.dataset.i].target=s.value;ringkasMhs()});
 ["mBim","mSid","mSem"].forEach(id=>$(id).onchange=ringkasMhs);
-$("mSkip").onclick=()=>{mplan.forEach(r=>{if(!r.cocok)r.target=""});gambarMhs()};
-$("mNew").onclick=()=>{mplan.forEach(r=>{if(!r.cocok)r.target="__new"});gambarMhs()};
+[["B",()=>mplanB],["U",()=>mplanU]].forEach(([k,pl])=>{
+ $("mSkip"+k).onclick=()=>{pl().forEach(r=>{if(!r.cocok)r.target=""});gambarMhs()};
+ $("mNew"+k).onclick=()=>{pl().forEach(r=>{if(!r.cocok&&r.status==="ok")r.target="__new"});gambarMhs()}});
 $("mCancel").onclick=()=>$("dlgMhs").close();
 $("mGo").onclick=()=>{const o=mOpt();
  if(!o.bimb&&!o.sidang&&!o.seminar){toast("Pilih minimal satu jenis data.");return}
- if(!mplan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
- const r=terapkanMhs(mplan,o);$("dlgMhs").close();
- toast(r.bimb+" pembimbingan dan "+r.uji+" penguji ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.isi?", "+r.isi+" nama mahasiswa dilengkapi pada data lama":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
+ if(!mplanB.some(r=>r.target!=="")&&!mplanU.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
+ const peta=new Map(),rb=terapkanMhs(mplanB,{...o,sidang:false,seminar:false},peta),ru=terapkanMhs(mplanU,{...o,bimb:false},peta);
+ $("dlgMhs").close();
+ const baru=rb.baru+ru.baru,lewat=rb.lewat+ru.lewat,isi=rb.isi+ru.isi;
+ toast((mplanB.length?rb.bimb+" pembimbingan":ru.uji+" penguji")+" ditambahkan"+(baru?", "+baru+" profil baru":"")+(isi?", "+isi+" nama mahasiswa dilengkapi pada data lama":"")+(lewat?", "+lewat+" sudah ada (dilewati)":"")+".")};
 })();
 refresh();
 {const dd=dedupeResearch();if(syncAll()||dd){applying=true;persist();applying=false}
