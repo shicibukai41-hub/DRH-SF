@@ -155,7 +155,7 @@ research:{label:"Penelitian & Publikasi",types:{
 teaching:{label:"Pengajaran",types:{
  mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"bukti_sk",l:"Link SK Dekan"},{k:"bukti_kq",l:"Link Kuesioner"}]},
  bimb:{name:"Pembimbingan Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nama",l:"Nama Mahasiswa"},{k:"nim",l:"NIM"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"peran",l:"Peranan"},{k:"status",l:"Status (khusus S3)",o:["Telah selesai","Penelitian tahap III"]},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
- uji:{name:"Penguji Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nim",l:"NIM"},{k:"nama",l:"Nama Mahasiswa"},{k:"fak",l:"Fakultas/Sekolah"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
+ uji:{name:"Penguji Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nim",l:"NIM"},{k:"nama",l:"Nama Mahasiswa"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  mhs:{name:"Pembimbingan Kemahasiswaan",f:[{k:"nama",l:"Nama Kegiatan",w:1},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
  muda:{name:"Pembimbingan Dosen Muda",f:[{k:"nama",l:"Nama/NIP Dosen Muda"},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link",w:1}]},
  bimbR:{name:"Rekap Pembimbingan Mahasiswa (sejak menjadi dosen)",f:[{k:"jenjang",l:"Jenjang",o:JJ},{k:"jumlah",l:"Jumlah mahasiswa"}]},
@@ -341,8 +341,9 @@ $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  dd.hidden=true;
  let saved,pr=[];if(wasEdit){const e=entries.find(x=>x.id===editId);if(e){const ov=e.v,ok=dupKeyOf(e.sec,e.type,ov),mkMoved=e.sec==="teaching"&&e.type==="mk"&&semKey({v:ov})!==semKey({v});e.v=v;if(mkMoved)placeMk(e);saved=e;e._pr={ov,ok}}}else{const ne={id:uid(),sec:s,type:k,v,t:Date.now(),d:cur};entries.push(ne);if(s==="teaching"&&k==="mk")placeMk(ne);saved=ne;pg[s+"|"+k]=Math.floor(listOf(s,k).findIndex(x=>x.id===ne.id)/PG)+1}
  const sst={cek:0,match:0,skip:0,ada:0},sy=saved?syncEntry(saved,sst):[];
+ const mh=saved?propagateMhs(saved,saved._pr?saved._pr.ov:null):[];
  if(saved&&saved._pr){pr=propagateShared(saved,saved._pr.ok,saved._pr.ov);delete saved._pr}
- persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
+ persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(mh.length?" Fakultas/Sekolah, Perguruan Tinggi & Tahun Lulus mahasiswa ikut diperbarui di portofolio: "+mh.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
  if(!wasEdit&&ctxSec==="dashboard")show(s)});
 
 /* ===== Aksi: hapus, ekspor, impor, reset ===== */
@@ -420,11 +421,27 @@ function syncEntry(e,st){const f=NAMEF[e.sec+"|"+e.type],made=[];if(!f)return ma
   entries.push({id:uid(),sec:e.sec,type:e.type,v,t:Date.now(),d:D.id,g:e.g});made.push(D.nama)});
  return made}
 /* periksa semua data penelitian/publikasi/pengabdian milik semua dosen; kembalikan jumlah salinan baru */
-function syncAll(st){let n=0;[...entries].forEach(e=>{if(NAMEF[e.sec+"|"+e.type]){if(st)st.cek++;n+=syncEntry(e,st).length}});return n}
+function syncAll(st){let n=0;[...entries].forEach(e=>{if(NAMEF[e.sec+"|"+e.type]){if(st)st.cek++;n+=syncEntry(e,st).length}});const m=fillMhs();if(st)st.mhs=m;return n+m}
+/* ===== Sinkron data mahasiswa (kunci: NIM) antar dosen & antara kartu Pembimbingan dan Penguji =====
+   Fakultas/Sekolah, Perguruan Tinggi, dan Tahun Lulus adalah milik mahasiswa, bukan milik dosen. Peranan/Bukti tetap pribadi. */
+const MHSF=["fak","pt","lulus"];
+const mhsKey=e=>{if(!e||e.sec!=="teaching"||(e.type!=="bimb"&&e.type!=="uji"))return null;const k=String((e.v||{}).nim||"").replace(/\s+/g,"").toLowerCase();return k||null};
+/* e baru/diubah: kolom yang diubah ditimpakan ke dosen lain; entri baru juga melengkapi kolom kosongnya dari data yang sudah ada */
+function propagateMhs(e,ov){const k=mhsKey(e);if(!k)return[];const names=new Set(),same=entries.filter(x=>x!==e&&mhsKey(x)===k);if(!same.length)return[];
+ if(!ov)MHSF.forEach(f=>{if(!String(e.v[f]||"").trim()){const o=same.filter(x=>String(x.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o)e.v[f]=o.v[f]}});
+ same.forEach(x=>{let ch=false;MHSF.forEach(f=>{const nv=String(e.v[f]||"").trim(),old=ov?String(ov[f]||"").trim():"",xv=String(x.v[f]||"").trim();
+  if(!nv)return;if(ov?nv!==old&&xv!==nv:!xv){x.v[f]=nv;ch=true}});
+  if(ch){const D=dosens.find(d=>d.id===x.d);if(D)names.add(D.nama)}});
+ return[...names]}
+/* lengkapi kolom kosong dari data terbaru dengan NIM yang sama (dipakai saat impor, muat data, dan sinkron manual); kembalikan jumlah entri yang dilengkapi */
+function fillMhs(){const g=new Map();entries.forEach(e=>{const k=mhsKey(e);if(k){if(!g.has(k))g.set(k,[]);g.get(k).push(e)}});let n=0;
+ g.forEach(l=>{if(l.length<2)return;l.forEach(x=>{let ch=false;MHSF.forEach(f=>{if(String(x.v[f]||"").trim())return;
+  const o=l.filter(y=>y!==x&&String(y.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o){x.v[f]=o.v[f];ch=true}});if(ch)n++})});
+ return n}
 function tombstone(x){if(!NAMEF[x.sec+"|"+x.type])return;const D=dosens.find(d=>d.id===x.d);if(!D)return;
  const s=D.skip=D.skip||[];[x.g,sKey(x)].forEach(i=>{if(i&&!s.includes(i))s.push(i)})}
-{const bs=$("bSync");if(bs)bs.onclick=()=>{const st={cek:0,match:0,skip:0,ada:0},n=syncAll(st);if(n){persist();refresh()}
- alert("Hasil sinkronisasi\n\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+(st.dups&&st.dups.length?"\n\nDATA SUDAH ADA (tidak digandakan) di: "+[...new Set(st.dups)].join("; "):"")+
+{const bs=$("bSync");if(bs)bs.onclick=()=>{const st={cek:0,match:0,skip:0,ada:0},n0=syncAll(st),n=n0-(st.mhs||0);if(n0){persist();refresh()}
+ alert("Hasil sinkronisasi\n\nData mahasiswa dilengkapi (Fakultas/PT/Tahun Lulus): "+(st.mhs||0)+"\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+(st.dups&&st.dups.length?"\n\nDATA SUDAH ADA (tidak digandakan) di: "+[...new Set(st.dups)].join("; "):"")+
  (st.match===0?"\n\nTidak ada nama dosen terdaftar yang ditemukan di kolom Penulis/Penyusun/Tim. Pastikan nama dosen di menu Dosen sama dengan yang ditulis di data (boleh pakai inisial, misalnya \"R. Hartati\").\n\nDosen terdaftar: "+dosens.map(d=>d.nama).join("; "):""))}}
 
 /* ===== Tambah / ubah dosen ===== */
@@ -484,7 +501,7 @@ function buildDoc(){
    if(seen.has(k))return false;seen.add(k);return true})};
  const mkCols=[C("Kode dan Nama Mata Kuliah/Praktikum/Studio","mk",{w:44}),C("Semester/Tahun","sem",{c:1,w:13}),C("Fakultas/Sekolah","fak",{c:1,w:16}),{h:"Bukti dokumen (SK Dekan dan hasil kuesioner perkuliahan)",w:27,m:[["SK Dekan","bukti_sk"],["Kuesioner","bukti_kq"]]}];
  const bimCols=[C("Nama Mahasiswa","nama",{w:18}),C("NIM","nim",{c:1,w:10}),C("Fakultas/Sekolah","fak",{c:1,w:11}),C("Perguruan Tinggi","pt",{c:1,w:13}),C("Peranan (ketua/ko-pembimbing)","peran",{c:1,w:16}),C("Tahun Lulus (sem.)","lulus",{c:1,w:9}),BK("Bukti dokumen (SK Dekan)")];
- const ujiCols=[C("Jenjang","jenjang",{c:1,w:8}),C("NIM","nim",{c:1,w:12}),C("Nama Mahasiswa","nama",{w:28}),C("Fakultas/Sekolah","fak",{c:1,w:16}),C("Tahun Lulus (sem.)","lulus",{c:1,w:11}),BK("Bukti dokumen (SK Dekan)")];
+ const ujiCols=[C("Jenjang","jenjang",{c:1,w:8}),C("NIM","nim",{c:1,w:12}),C("Nama Mahasiswa","nama",{w:24}),C("Fakultas/Sekolah","fak",{c:1,w:14}),C("Perguruan Tinggi","pt",{c:1,w:14}),C("Tahun Lulus (sem.)","lulus",{c:1,w:11}),BK("Bukti dokumen (SK Dekan)")];
  const mkEarly=[C("Kode dan Nama Mata Kuliah/Praktikum/Studio","mk",{w:70}),C("Fakultas/Sekolah","fak",{c:1,w:22})];
  const HL=["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"];
  const eBim=early("teaching","bimb"),eUji=early("teaching","uji"),eIlm=early("activities","ilmiah"),eHib=early("research","hibah"),eAbd=early("community","abdi");
@@ -1196,7 +1213,7 @@ function terapkanMhs(pl,o,peta){
   if(o.sidang)r.roles.sidang.forEach((n,k)=>u.set(k,n));
   if(o.seminar)r.roles.seminar.forEach((n,k)=>{if(!u.has(k))u.set(k,n)});
   u.forEach((nama,nim)=>{if(tambah("uji",nim,nama))uji++})});
- persist();refresh();return{bimb:bimb,uji:uji,lewat:lewat,baru:baru,isi:isi}}
+ fillMhs();persist();refresh();return{bimb:bimb,uji:uji,lewat:lewat,baru:baru,isi:isi}}
 let mplanB=[],mplanU=[];
 const mOpt=()=>({bimb:$("mBim").checked,sidang:$("mSid").checked,seminar:$("mSem").checked,jenjang:$("mJen").checked});
 const ujiSet=(r,o)=>{const u=new Set();if(o.sidang)r.roles.sidang.forEach((n,k)=>u.add(k));if(o.seminar)r.roles.seminar.forEach((n,k)=>u.add(k));return u};
