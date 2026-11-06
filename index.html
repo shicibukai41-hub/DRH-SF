@@ -343,7 +343,7 @@ $("frm").addEventListener("submit",ev=>{ev.preventDefault();
  const sst={cek:0,match:0,skip:0,ada:0},sy=saved?syncEntry(saved,sst):[];
  const mh=saved?propagateMhs(saved,saved._pr?saved._pr.ov:null):[];
  if(saved&&saved._pr){pr=propagateShared(saved,saved._pr.ok,saved._pr.ov);delete saved._pr}
- persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(mh.length?" Fakultas/Sekolah, Perguruan Tinggi & Tahun Lulus mahasiswa ikut diperbarui di portofolio: "+mh.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
+ persist();refresh();$("dlg").close();toast((wasEdit?"Perubahan disimpan.":"Data ditambahkan.")+(pr.length?" Isian Jurnal/Bukti ikut diperbarui di portofolio: "+pr.join(", ")+".":"")+(mh.length?(k==="uji"?" Fakultas/Sekolah, Perguruan Tinggi, Tahun Lulus & Bukti SK Dekan penguji ikut diperbarui di portofolio: ":" Fakultas/Sekolah, Perguruan Tinggi & Tahun Lulus mahasiswa ikut diperbarui di portofolio: ")+mh.join(", ")+".":"")+(sy.length?" Disalin juga ke portofolio: "+sy.join(", ")+".":"")+(sst.dups&&sst.dups.length?" Data sudah ada di portofolio: "+sst.dups.join(", ")+" (tidak digandakan).":""));
  if(!wasEdit&&ctxSec==="dashboard")show(s)});
 
 /* ===== Aksi: hapus, ekspor, impor, reset ===== */
@@ -425,23 +425,28 @@ function syncAll(st){let n=0;[...entries].forEach(e=>{if(NAMEF[e.sec+"|"+e.type]
 /* ===== Sinkron data mahasiswa (kunci: NIM) antar dosen & antara kartu Pembimbingan dan Penguji =====
    Fakultas/Sekolah, Perguruan Tinggi, dan Tahun Lulus adalah milik mahasiswa, bukan milik dosen. Peranan/Bukti tetap pribadi. */
 const MHSF=["fak","pt","lulus"];
+/* Khusus Penguji Mahasiswa: Bukti dokumen (SK Dekan) disinkronkan antar dosen penguji pada mahasiswa (NIM) yang sama.
+   SK Dekan penguji adalah satu dokumen yang sama untuk semua penguji. Bukti pada Pembimbingan tetap pribadi. */
+const MHSU=["bukti"];
+const fMhs=e=>e&&e.type==="uji"?MHSF.concat(MHSU):MHSF;
+const fPair=(a,b)=>a.type==="uji"&&b.type==="uji"?MHSF.concat(MHSU):MHSF;
 const mhsKey=e=>{if(!e||e.sec!=="teaching"||(e.type!=="bimb"&&e.type!=="uji"))return null;const k=String((e.v||{}).nim||"").replace(/\s+/g,"").toLowerCase();return k||null};
 /* e baru/diubah: kolom yang diubah ditimpakan ke dosen lain; entri baru juga melengkapi kolom kosongnya dari data yang sudah ada */
 function propagateMhs(e,ov){const k=mhsKey(e);if(!k)return[];const names=new Set(),same=entries.filter(x=>x!==e&&mhsKey(x)===k);if(!same.length)return[];
- if(!ov)MHSF.forEach(f=>{if(!String(e.v[f]||"").trim()){const o=same.filter(x=>String(x.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o)e.v[f]=o.v[f]}});
- same.forEach(x=>{let ch=false;MHSF.forEach(f=>{const nv=String(e.v[f]||"").trim(),old=ov?String(ov[f]||"").trim():"",xv=String(x.v[f]||"").trim();
+ if(!ov)fMhs(e).forEach(f=>{if(!String(e.v[f]||"").trim()){const o=same.filter(x=>fPair(e,x).includes(f)&&String(x.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o)e.v[f]=o.v[f]}});
+ same.forEach(x=>{let ch=false;fPair(e,x).forEach(f=>{const nv=String(e.v[f]||"").trim(),old=ov?String(ov[f]||"").trim():"",xv=String(x.v[f]||"").trim();
   if(!nv)return;if(ov?nv!==old&&xv!==nv:!xv){x.v[f]=nv;ch=true}});
   if(ch){const D=dosens.find(d=>d.id===x.d);if(D)names.add(D.nama)}});
  return[...names]}
 /* lengkapi kolom kosong dari data terbaru dengan NIM yang sama (dipakai saat impor, muat data, dan sinkron manual); kembalikan jumlah entri yang dilengkapi */
 function fillMhs(){const g=new Map();entries.forEach(e=>{const k=mhsKey(e);if(k){if(!g.has(k))g.set(k,[]);g.get(k).push(e)}});let n=0;
- g.forEach(l=>{if(l.length<2)return;l.forEach(x=>{let ch=false;MHSF.forEach(f=>{if(String(x.v[f]||"").trim())return;
-  const o=l.filter(y=>y!==x&&String(y.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o){x.v[f]=o.v[f];ch=true}});if(ch)n++})});
+ g.forEach(l=>{if(l.length<2)return;l.forEach(x=>{let ch=false;fMhs(x).forEach(f=>{if(String(x.v[f]||"").trim())return;
+  const o=l.filter(y=>y!==x&&fPair(x,y).includes(f)&&String(y.v[f]||"").trim()).sort((a,b)=>(b.t||0)-(a.t||0))[0];if(o){x.v[f]=o.v[f];ch=true}});if(ch)n++})});
  return n}
 function tombstone(x){if(!NAMEF[x.sec+"|"+x.type])return;const D=dosens.find(d=>d.id===x.d);if(!D)return;
  const s=D.skip=D.skip||[];[x.g,sKey(x)].forEach(i=>{if(i&&!s.includes(i))s.push(i)})}
 {const bs=$("bSync");if(bs)bs.onclick=()=>{const st={cek:0,match:0,skip:0,ada:0},n0=syncAll(st),n=n0-(st.mhs||0);if(n0){persist();refresh()}
- alert("Hasil sinkronisasi\n\nData mahasiswa dilengkapi (Fakultas/PT/Tahun Lulus): "+(st.mhs||0)+"\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+(st.dups&&st.dups.length?"\n\nDATA SUDAH ADA (tidak digandakan) di: "+[...new Set(st.dups)].join("; "):"")+
+ alert("Hasil sinkronisasi\n\nData mahasiswa dilengkapi (Fakultas/PT/Tahun Lulus, + Bukti SK Dekan pada Penguji): "+(st.mhs||0)+"\nData diperiksa: "+st.cek+"\nNama dosen terdaftar ditemukan: "+st.match+"\nSalinan baru dibuat: "+n+"\nSudah ada di dosen tujuan: "+st.ada+"\nDilewati (pernah dihapus di dosen tujuan): "+st.skip+(st.dups&&st.dups.length?"\n\nDATA SUDAH ADA (tidak digandakan) di: "+[...new Set(st.dups)].join("; "):"")+
  (st.match===0?"\n\nTidak ada nama dosen terdaftar yang ditemukan di kolom Penulis/Penyusun/Tim. Pastikan nama dosen di menu Dosen sama dengan yang ditulis di data (boleh pakai inisial, misalnya \"R. Hartati\").\n\nDosen terdaftar: "+dosens.map(d=>d.nama).join("; "):""))}}
 
 /* ===== Tambah / ubah dosen ===== */
