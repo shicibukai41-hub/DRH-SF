@@ -68,6 +68,18 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 .dinfo{flex:1;min-width:0}.dinfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dinfo .label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .drow .av-s{flex:none}.drow .dbtn{margin:0;flex:none}
 @media(max-width:600px){.drow{flex-wrap:wrap}.drow .dbtn{width:100%}}
+.psa-ban{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;margin-bottom:14px;border:1px solid}
+.psa-ban.ok{background:#ecfdf3;border-color:#abefc6;color:#067647}.psa-ban.no{background:#fef3f2;border-color:#fecdca;color:#b42318}
+.psa-ban .psa-t{color:var(--muted);font-weight:400;margin-top:2px}
+.psa-dot{flex:none;width:14px;height:14px;border-radius:50%;margin-top:4px;display:inline-block}
+.psa-ban .psa-dot{margin:0;width:18px;height:18px}
+.psa-dot.ok{background:#12b76a}.psa-dot.no{background:#f04438}.psa-dot.info{background:#98a2b3}.psa-dot.na{background:#fff;border:2px solid #d0d5dd}
+.psa-k{font-weight:700;margin:18px 0 6px;padding-bottom:5px;border-bottom:2px solid var(--soft);color:var(--blue)}
+.psa-i{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}.psa-i:last-child{border-bottom:0}.psa-c{flex:1;min-width:0}
+.psa-p{font-weight:600}.psa-t{font-size:13px}.psa-r{font-size:12px;color:var(--muted)}
+.psa-b{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.psa-b.ok{background:#ecfdf3;color:#067647}.psa-b.no{background:#fef3f2;color:#b42318}.psa-b.info{background:#f2f4f7;color:#475467}.psa-b.na{background:#f2f4f7;color:#667085;font-weight:600}
+.psa-i .psa-dot.na~.psa-c .psa-p,.psa-i .psa-dot.na~.psa-c .psa-t{color:var(--muted);font-weight:400}
 </style></head><body>
 <header><div class="wrap hero"><div class="avatar">RH</div><div><h1 id="name"></h1><div class="sub" id="institution"></div><div id="nip"></div></div></div></header>
 <nav><div class="wrap nav" id="nav"></div></nav>
@@ -153,7 +165,7 @@ research:{label:"Penelitian & Publikasi",types:{
  karya:{name:"Karya Bermanfaat (HAKI, Paten, dll.)",f:[{k:"tim",l:"Nama Tim"},{k:"jenis",l:"Jenis Karya"},{k:"judul",l:"Judul Karya",w:1},{k:"tahun",l:"Tahun"},{k:"ket",l:"Keterangan"},{k:"bukti",l:"Bukti dokumen / link"}]},
  hibRL:{name:"Rekap Hibah per Level (sejak menjadi dosen)",f:[{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"jumlah",l:"Jumlah"}]}}},
 teaching:{label:"Pengajaran",types:{
- mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"bukti_sk",l:"Link SK Dekan"},{k:"bukti_kq",l:"Link Kuesioner"}]},
+ mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"edom",l:"Nilai EDOM (skala 4, mis. 3,45)"},{k:"bukti_sk",l:"Link SK Dekan"},{k:"bukti_kq",l:"Link Kuesioner"}]},
  bimb:{name:"Pembimbingan Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nama",l:"Nama Mahasiswa"},{k:"nim",l:"NIM"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"peran",l:"Peranan"},{k:"status",l:"Status (khusus S3)",o:["Telah selesai","Penelitian tahap III"]},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  uji:{name:"Penguji Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nim",l:"NIM"},{k:"nama",l:"Nama Mahasiswa"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  mhs:{name:"Pembimbingan Kemahasiswaan",f:[{k:"nama",l:"Nama Kegiatan",w:1},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
@@ -222,6 +234,7 @@ function renderProfile(){const D=curD(),tg=[D.kk,D.jab].filter(Boolean).map(t=>`
 ["dashboard",...SECS].forEach(id=>{const sec=$(id),h2=sec.querySelector("h2"),hd=document.createElement("div");hd.className="sec-head";h2.replaceWith(hd);hd.appendChild(h2);
  const b=document.createElement("button");b.className="btn primary";b.textContent="+ Tambah";b.dataset.add=id;hd.appendChild(b)});
 {const db=$("dashboard").querySelector(".sec-head button");db.textContent="+ Tambah Dosen";delete db.dataset.add;db.dataset.adddosen="1";$("profileCard").insertAdjacentHTML("afterend",'<div class="card" id="drhCard"></div><div id="pDash"><h3 style="margin:22px 0 12px">Dashboard Dosen</h3><div class="grid" id="pMetrics"></div><div class="card" id="pRecent"></div></div>')}
+{const pb=$("profile").querySelector(".sec-head [data-add]");if(pb)pb.style.display="none"}
 SECS.filter(s=>s!=="data").forEach(s=>{const d=document.createElement("div");d.id="e-"+s;const sec=$(s);if(s==="profile")sec.appendChild(d);else sec.querySelector(".sec-head").after(d)});
 {const hd=$("research").querySelector(".sec-head"),b=document.createElement("button");b.className="btn";b.id="bSortYr";hd.insertBefore(b,hd.querySelector("[data-add]"));
  const lab=()=>{b.textContent=yrDir<0?"Urut: tahun terbaru ↓":"Urut: tahun terlama ↑"};lab();
@@ -282,7 +295,7 @@ function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
  const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th>${esc(c.bg||c.f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
  const imp=s==="teaching"&&["mk","bimb","uji"].includes(k)?`<button type="button" class="btn sm" data-imp="${k}" title="Impor ${esc(T.name)} dari file SK (PDF / Excel)">\u2b06 Impor</button><button type="button" class="btn sm" data-tpl="${k}" title="Unduh contoh format Excel untuk impor ${esc(T.name)}">\u2b07 Template</button>`:"";
  return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${imp}<button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></span></div>${tbl}</div>`}
-function renderSec(s){$("e-"+s).innerHTML=Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
+function renderSec(s){$("e-"+s).innerHTML=s==="profile"?psaCard():Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
 const SECL=["profile","career","research","teaching","community","activities","awards"];
 const normV=v=>Object.keys(v||{}).filter(k=>k!=="peran").sort().map(k=>String(v[k]||"").toLowerCase().replace(/\s+/g," ").trim()).join("|");
 /* data dianggap sama bila jenis & isinya sama (salinan sinkron nama tim dihitung satu). Data pribadi (profil, karier, rekap) tetap dihitung per dosen. */
@@ -493,6 +506,106 @@ const psum=(h1,h2,items)=>`<table class="sum"><thead><tr><th class="no">No.</th>
 const num=v=>parseInt(String(v||"").replace(/\D/g,""),10)||0;
 const nz=x=>String(x||"").trim().toLowerCase();
 const cntOf=(rek,earl,k,val,def)=>{const r=rek.filter(e=>nz(e.v[k])===nz(val));return r.length?r.reduce((a,e)=>a+num(e.v.jumlah),0):earl.filter(e=>nz(e.v[k]||def)===nz(val)).length};
+/* ===== Penilaian kriteria kenaikan jabatan (Lampiran 6a.2 Lembar Penilaian, Senat Akademik ITB) ===== */
+const PSA_NAMA={AA:"Asisten Ahli",L:"Lektor",LK:"Lektor Kepala",GB:"Guru Besar/Profesor"};
+const psaN=v=>String(v==null?"":v).toLowerCase().replace(/\s+/g," ").trim();
+const psaNum=v=>{const x=parseFloat(String(v==null?"":v).replace(",","."));return isNaN(x)?null:x};
+const psaFmt=x=>String(x).replace(".",",");
+function psaTarget(t){t=psaN(t);if(/guru\s*besar|profesor|^prof\b/.test(t))return"GB";if(/lektor\s*kepala|^lk$/.test(t))return"LK";if(/lektor/.test(t))return"L";if(/asisten\s*ahli|^aa$/.test(t))return"AA";return""}
+/* jumlah "sejak menjadi dosen" = rekap 5.x.1 (bila ada) atau data periode "sejak menjadi dosen", ditambah data "sejak kenaikan jabatan terakhir" */
+function psaSD(sec,rk,type,key,val,def){const all=rowsOf(sec,type),rek=rowsOf(sec,rk).filter(e=>psaN(e.v[key]||"")===psaN(val)),
+ same=e=>psaN(e.v[key]||def)===psaN(val),base=rek.length?rek.reduce((a,e)=>a+(parseInt(e.v.jumlah)||0),0):all.filter(e=>isEarly(e)&&same(e)).length;
+ return base+all.filter(e=>!isEarly(e)&&same(e)).length}
+function psaSDall(sec,rk,type){const all=rowsOf(sec,type),rek=rowsOf(sec,rk),
+ base=rek.length?rek.reduce((a,e)=>a+(parseInt(e.v.jumlah)||0),0):all.filter(isEarly).length;
+ return base+all.filter(e=>!isEarly(e)).length}
+const psaParts=parts=>({ok:parts.every(x=>x[1]>=x[2]),ket:parts.map(x=>x[0]+": "+x[1]+" dari min. "+x[2]+(x[1]>=x[2]?" ✓":" ✗")).join(" · ")});
+function psaEval(tg){
+ const isAA=tg==="AA",isL=tg==="L",isLK=tg==="LK",isGB=tg==="GB",out=[];
+ const NA=(p,ref)=>({p,ref,st:"na",ket:"Tidak ada syarat untuk jabatan ini"});
+ const P=(p,ref,parts,extra)=>{const r=psaParts(parts);return{p,ref,st:r.ok?"ok":"no",ket:r.ket+(extra?" — "+extra:"")}};
+ const INFO=(p,ref,ket)=>({p,ref,st:"info",ket});
+ const K=(k,items)=>out.push({k,items});
+ const late=l=>l.filter(e=>!isEarly(e));
+ /* ---- 1. Pengajaran dan pembimbingan ---- */
+ const mk=late(rowsOf("teaching","mk")),conEdom=mk.filter(e=>psaNum(e.v.edom)!==null);
+ let a1;{const p="a. Menyampaikan materi ajar (EDOM ≥ 3,00 pada 4 semester terakhir)",ref="Riwayat Hidup butir 5.1.2";
+  if(!mk.length)a1={p,ref,st:"no",ket:"Belum ada mata kuliah pada bagian 5.1.2 (sejak kenaikan jabatan terakhir)"};
+  else if(!conEdom.length)a1={p,ref,st:"no",ket:"Nilai EDOM belum diisi pada data Mata Kuliah (kolom “Nilai EDOM”)"};
+  else{const keys=[...new Set(conEdom.map(semKey))].sort((x,y)=>semVal(y.split("|")[1])-semVal(x.split("|")[1])).slice(0,4),
+   used=conEdom.filter(e=>keys.includes(semKey(e))),vals=used.map(e=>psaNum(e.v.edom)),mn=Math.min(...vals),low=vals.filter(x=>x<3).length,miss=mk.filter(e=>keys.includes(semKey(e))&&psaNum(e.v.edom)===null).length;
+   a1={p,ref,st:low?"no":"ok",ket:(low?low+" dari "+vals.length+" mata kuliah bernilai di bawah 3,00":"Seluruh "+vals.length+" nilai EDOM ≥ 3,00")+" (terendah "+psaFmt(mn)+", "+keys.length+" semester terakhir)"+(miss?" — "+miss+" mata kuliah belum ada nilai EDOM":"")}}}
+ const buku=rowsOf("research","buku").length;
+ const bl=late(rowsOf("teaching","bimb")),lb=j=>bl.filter(e=>(e.v.jenjang||"S1")===j).length,sdB=j=>psaSD("teaching","bimbR","bimb","jenjang",j,"S1"),
+  itb=e=>{const t=psaN(e.v.pt);return !t||/itb|institut teknologi bandung/.test(t)},s3B=bl.filter(e=>e.v.jenjang==="S3"&&itb(e)).length;
+ const c1=isAA?NA("c. Membimbing dan meluluskan mahasiswa","Riwayat Hidup butir 5.2.2"):P("c. Membimbing dan meluluskan mahasiswa","Riwayat Hidup butir 5.2.2",
+  isL?[["Sarjana sejak kenaikan jabatan",lb("S1"),5]]:isLK?[["Sarjana sejak menjadi dosen",sdB("S1"),5],["Magister sejak kenaikan jabatan",lb("S2"),1]]
+  :[["Sarjana sejak menjadi dosen",sdB("S1"),5],["Magister sejak menjadi dosen",sdB("S2"),3],["Doktor di ITB (tahap penelitian) sejak kenaikan jabatan",s3B,1]]);
+ const ul=late(rowsOf("teaching","uji")),lu=j=>ul.filter(e=>(e.v.jenjang||"S1")===j).length,sdU=j=>psaSD("teaching","ujiR","uji","jenjang",j,"S1"),s3U=ul.filter(e=>e.v.jenjang==="S3"&&itb(e)).length;
+ const d1=P("d. Menguji mahasiswa","Riwayat Hidup butir 5.3.2",
+  isAA?[["Sarjana yang diuji",sdU("S1"),1]]:isL?[["Sarjana sejak kenaikan jabatan",lu("S1"),5]]:isLK?[["Sarjana sejak menjadi dosen",sdU("S1"),5],["Magister sejak kenaikan jabatan",lu("S2"),1]]
+  :[["Sidang doktor sejak kenaikan jabatan",lu("S3"),3],["di antaranya mahasiswa doktor ITB",s3U,1]]);
+ const kur=rowsOf("community","inst").filter(e=>/kurikulum|gkm|gugus\s*kendali|advisory|kajian\s*akademik/i.test((e.v.nama||"")+" "+(e.v.peran||""))).length;
+ const lat=rowsOf("activities","pelatihan").length;
+ K("1. Keunggulan dalam Pengajaran dan Pembimbingan",[a1,
+  P("b. Menyusun materi atau buku ajar (min. 1 sejak diangkat sebagai dosen)","Riwayat Hidup butir VI",[["Buku/diktat/hand-out",buku,1]]),c1,d1,
+  isAA?NA("e. Mengembangkan kurikulum","Riwayat Hidup butir XII"):P("e. Mengembangkan kurikulum (tim revisi kurikulum / GKM / advisory board / tim kajian akademik)","Riwayat Hidup butir XII",[["Kegiatan sejak menjadi dosen",kur,1]]),
+  (isAA||isL)?NA("f. Mengembangkan kapasitas diri (sertifikasi/pelatihan terstruktur ≥ 20 jam)","Riwayat Hidup butir XVI"):P("f. Mengembangkan kapasitas diri (sertifikasi/pelatihan terstruktur ≥ 20 jam)","Riwayat Hidup butir XVI",[["Program sejak menjadi dosen",lat,1]],"durasi 20 jam perlu dicek pada bukti")]);
+ /* ---- 2. Penelitian dan publikasi ---- */
+ const pubs=rowsOf("research","pub").map(e=>{const j=String(e.v.jurnal||""),pr=psaN(e.v.peran),sm=j.match(/sinta\s*[-:]?\s*([1-6])/i),sinta=sm?+sm[1]:0,
+  rep=/scopus|wos|web of science|\bq[1-4]\b|impact\s*factor|\bscie?\b|\bif\s*[:=]?\s*\d/i.test(j),intl=rep||(!sinta&&/internasional|international|doaj/i.test(j)),
+  im=j.match(/(?:impact\s*factor|\bIF\b)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+  return{sinta,rep,intl,ifv:im?psaNum(im[1]):null,first:/pertama|first/.test(pr),corr:/korespond|correspond/.test(pr),itb:/\bitb\b|institut teknologi bandung/i.test(j),klas:!!(sinta||intl)}});
+ const fc=p=>p.first&&p.corr,nat4=pubs.filter(p=>p.sinta&&p.sinta<=4&&!p.intl),unk=pubs.filter(p=>!p.klas).length,
+  unkTxt=unk?" — "+unk+" artikel belum terbaca jenis jurnalnya (tulis Sinta/Scopus/WoS/Q pada kolom Jurnal)":"";
+ let pb;{const p="a. Memiliki publikasi ilmiah sesuai bidang ilmu (sejak kenaikan jabatan terakhir)",ref="Riwayat Hidup butir VII";
+  if(isAA||isL){const ni=pubs.filter(x=>x.intl).length,need=isAA?1:2,ok=ni>=1||(nat4.length>=need&&(isAA?nat4.some(fc):nat4.some(fc)));
+   pb={p,ref,st:ok?"ok":"no",ket:"Jurnal internasional: "+ni+" dari min. 1 · atau jurnal nasional Sinta 1–4: "+nat4.length+" dari min. "+need+", dengan penulis pertama & korespondensi: "+nat4.filter(fc).length+" dari min. 1"+unkTxt}}
+  else if(isLK){const ri=pubs.filter(x=>x.rep),n12=pubs.filter(x=>x.sinta&&x.sinta<=2&&!x.rep),pool=[...ri,...n12],ok=(ri.length>=2||(n12.length>=2&&ri.length>=1))&&pool.some(fc);
+   pb={p,ref,st:ok?"ok":"no",ket:"Internasional bereputasi: "+ri.length+" (min. 2; atau min. 1 + 2 nasional Sinta 1–2, ada: "+n12.length+") · penulis pertama & korespondensi: "+pool.filter(fc).length+" dari min. 1"+unkTxt}}
+  else{const s=pubs.filter(x=>x.rep&&x.ifv!=null&&x.ifv>=0.1),noIf=pubs.filter(x=>x.rep&&x.ifv==null).length;
+   pb=P(p,ref,[["Artikel jurnal internasional bereputasi ber-IF ≥ 0,1",s.length,5],["sebagai penulis pertama",s.filter(x=>x.first).length,1],["sebagai penulis pertama atau korespondensi",s.filter(x=>x.first||x.corr).length,2],["di jurnal luar ITB",s.filter(x=>!x.itb).length,3]],
+    (noIf?noIf+" artikel bereputasi belum mencantumkan impact factor (tulis “IF 1,2” pada kolom Jurnal)":"")+unkTxt.replace(/^ — /,noIf?"; ":""))}}
+ const il=late(rowsOf("activities","ilmiah")),ilAll=rowsOf("activities","ilmiah"),lvl=(l,v)=>l.filter(e=>v.includes(e.v.level||""));
+ const sp=e=>/narasumber|pembicara|speaker|keynote|invited/i.test(e.v.peran||"");
+ const rev=rowsOf("community","rev").length;
+ let rp;{const p="c. Memiliki reputasi akademik/ilmiah (narasumber/pembicara"+(isGB?", reviewer, editor, asesor":"")+", sejak diangkat sebagai dosen)",ref="Riwayat Hidup butir VIII, XV, dan XVIII";
+  if(isGB){const n=lvl(ilAll.filter(sp),["Internasional"]).length;rp=P(p,ref,[["Narasumber/pembicara internasional "+n+" + riwayat reviewer/editor/asesor "+rev,n+rev,3]])}
+  else{const lv=isAA?["Regional","Nasional","Internasional"]:["Nasional","Internasional"],need=isLK?3:1;
+   rp=P(p,ref,[["Narasumber/pembicara kegiatan "+(isAA?"regional atau lebih":"nasional atau lebih"),lvl(ilAll.filter(sp),lv).length,need]])}}
+ const hb=rowsOf("research","hibah"),hAll=psaSDall("research","hibRL","hibah"),ketua=hb.filter(e=>/ketua/i.test(e.v.peran||""));
+ const hd=isAA?NA("d. Hibah penelitian kompetitif / kerja sama / penugasan nasional","Riwayat Hidup butir IX"):P("d. Hibah penelitian kompetitif / kerja sama / penugasan nasional (sejak diangkat sebagai dosen)","Riwayat Hidup butir IX",
+  isGB?[["Kegiatan sebagai ketua",ketua.length,3],["di antaranya dari luar ITB",ketua.filter(e=>e.v.level&&e.v.level!=="Regional/ITB").length,1]]:[["Kegiatan sebagai anggota/ketua",hAll,isL?1:2]]);
+ K("2. Keunggulan dalam Penelitian dan Publikasi",[pb,
+  P("b. Peserta pertemuan ilmiah (seminar/konferensi) sejak kenaikan jabatan terakhir","Riwayat Hidup butir VIII",[["Kegiatan "+(isGB?"internasional":"internasional atau nasional"),lvl(il,isGB?["Internasional"]:["Nasional","Internasional"]).length,3]]),rp,hd]);
+ /* ---- 3 & 4. Pengabdian dan kontribusi institusi ---- */
+ const need34=isL?3:isLK?7:10,abd=psaSDall("community","abdR","abdi"),karya=rowsOf("research","karya").length;
+ const kj=rowsOf("career","kerja").length,ki=rowsOf("community","inst").length;
+ K("3. Keunggulan dalam Pengabdian kepada Masyarakat dan Konsultansi",[isAA?NA("Pengabdian kepada masyarakat, industri, dan layanan kepakaran","Riwayat Hidup butir X dan XI"):
+  P("Pengabdian kepada masyarakat, industri, dan layanan kepakaran (sejak diangkat sebagai dosen)","Riwayat Hidup butir X dan XI",[["Pengabdian (X) "+abd+" + karya bermanfaat (XI) "+karya,abd+karya,need34]])]);
+ K("4. Keunggulan dalam Kontribusi terhadap Institusi, Masyarakat, dan Bangsa",[isAA?NA("Peran dalam pengembangan institusi, masyarakat, dan bangsa","Riwayat Hidup butir IV dan XII"):
+  P("Peran dalam pengembangan institusi, masyarakat, dan bangsa (sejak diangkat sebagai dosen)","Riwayat Hidup butir IV dan XII",[["Riwayat kerja/penugasan (IV) "+kj+" + pengembangan institusi (XII) "+ki,kj+ki,need34]])]);
+ /* ---- 5. Kepemimpinan akademik ---- */
+ K("5. Keunggulan dalam Kepemimpinan Akademik",[
+  (isLK||isGB)?P("a. Membimbing mahasiswa sebagai dosen wali / dosen kemahasiswaan (sejak diangkat sebagai dosen)","Riwayat Hidup butir XIII",[["Periode pembimbingan kemahasiswaan",rowsOf("teaching","mhs").length,1]]):NA("a. Membimbing mahasiswa sebagai dosen wali / dosen kemahasiswaan","Riwayat Hidup butir XIII"),
+  isGB?P("b. Membimbing dosen muda (min. 1 kegiatan Tri Dharma bersama, sejak jabatan terakhir)","Riwayat Hidup butir XIV",[["Dosen muda yang dibimbing",rowsOf("teaching","muda").length,1]]):NA("b. Membimbing dosen muda","Riwayat Hidup butir XIV")]);
+ /* ---- 6 & 7. Dinilai dari dokumen di luar DRH ---- */
+ const rek=isGB?"KK, Dekan, Senat F/S, dan Guru Besar (satu F/S, ITB luar F/S, dan luar ITB)":isLK?"KK, Dekan, dan Senat F/S":"KK dan Dekan";
+ K("6. Kinerja, integritas, tanggung jawab, etika, dan tata krama dalam kehidupan kampus",[
+  INFO("a. Kelompok kerja yang harmonis, komunikatif, dan terbuka","Surat rekomendasi","Dinilai dari surat rekomendasi "+rek+" (di luar data DRH)"),
+  INFO("b. Menjaga nilai-nilai luhur ITB dan tidak sedang terkena pelanggaran etika","Surat rekomendasi; Riwayat Hidup butir XIX","Dinilai dari surat rekomendasi "+rek+" dan pernyataan etika DRH butir XIX"),
+  INFO("c. Sikap saling menghargai dan lingkungan kerja yang kondusif","Surat rekomendasi","Dinilai dari surat rekomendasi "+rek+" (di luar data DRH)")]);
+ K("7. Pengembangan Keilmuan",[(isLK||isGB)?INFO("Kesesuaian bidang ilmu program doktor dengan kegiatan saat ini dan yang akan dikembangkan","Visi Misi","Dinilai dari dokumen Visi Misi (di luar data DRH)"):NA("Kesesuaian bidang ilmu program doktor dengan kegiatan","Visi Misi")]);
+ return out}
+function psaCard(){const D=curD(),tg=psaTarget(D.jabUsul),
+ head='<div class="card-head"><h3>Penilaian Kriteria Kenaikan Jabatan (PSA)</h3><button class="btn sm" data-editdosen="'+esc(D.id)+'">Ubah data diri</button></div>';
+ if(!tg)return '<div class="card psa">'+head+'<div class="empty">'+(D.jabUsul?"Jabatan yang diusulkan “"+esc(D.jabUsul)+"” belum dikenali. Gunakan: Asisten Ahli, Lektor, Lektor Kepala, atau Guru Besar/Profesor.":"Isi “Jabatan Fungsional yang Diusulkan” pada Data Diri (tombol Ubah) — mis. Lektor, Lektor Kepala, atau Guru Besar — agar penilaian kriteria dapat dihitung.")+'</div></div>';
+ const res=psaEval(tg),all=res.flatMap(g=>g.items),nOk=all.filter(x=>x.st==="ok").length,nNo=all.filter(x=>x.st==="no").length,nInfo=all.filter(x=>x.st==="info").length,
+  lab={ok:"Memenuhi",no:"Belum memenuhi",info:"Dokumen non-DRH",na:"Tidak disyaratkan"};
+ const ban='<div class="psa-ban '+(nNo?"no":"ok")+'"><span class="psa-dot '+(nNo?"no":"ok")+'"></span><div><b>'+(nNo?"Belum memenuhi syarat":"Memenuhi syarat")+' — kenaikan jabatan ke '+esc(PSA_NAMA[tg])+'</b><div class="psa-t">'+nOk+' dari '+(nOk+nNo)+' parameter berbasis DRH terpenuhi'+(nInfo?' · '+nInfo+' parameter dinilai dari dokumen di luar DRH (surat rekomendasi / visi misi), belum dihitung':'')+'</div></div></div>';
+ const body=res.map(g=>'<div class="psa-k">'+esc(g.k)+'</div>'+g.items.map(x=>'<div class="psa-i"><span class="psa-dot '+x.st+'" title="'+lab[x.st]+'"></span><div class="psa-c"><div class="psa-p">'+esc(x.p)+' <span class="psa-b '+x.st+'">'+lab[x.st]+'</span></div><div class="psa-t">'+esc(x.ket)+'</div><div class="psa-r">Acuan: '+esc(x.ref)+'</div></div></div>').join("")).join("");
+ return '<div class="card psa">'+head+'<p class="muted" style="margin:0 0 12px">Dihitung otomatis dari data DRH dosen ini, mengikuti Lampiran 6a.2 (Lembar Penilaian Kriteria Kenaikan Jabatan Akademik Dosen) untuk jabatan yang diusulkan: <b>'+esc(D.jabUsul)+'</b>.</p>'+ban+body+'</div>'}
+
 const jj=(list,pre,lab,cols)=>JJ.map((j,i)=>`<div class="psub">${pre}.${i+1}. ${lab} ${j}</div>${ptab(cols,list.filter(e=>(e.v.jenjang||"S1")===j))}`).join("");
 function buildDoc(){
  const D=curD();pName=coreName(D.nama);
