@@ -554,8 +554,8 @@ function psaEval(tg){
   (isAA||isL)?NA("f. Mengembangkan kapasitas diri (sertifikasi/pelatihan terstruktur ≥ 20 jam)","Riwayat Hidup butir XVI"):P("f. Mengembangkan kapasitas diri (sertifikasi/pelatihan terstruktur ≥ 20 jam)","Riwayat Hidup butir XVI",[["Program sejak menjadi dosen",lat,1]],"durasi 20 jam perlu dicek pada bukti")]);
  /* ---- 2. Penelitian dan publikasi ---- */
  const pubs=rowsOf("research","pub").map(e=>{const j=String(e.v.jurnal||""),pr=psaN(e.v.peran),sm=j.match(/sinta\s*[-:]?\s*([1-6])/i),sinta=sm?+sm[1]:0,
-  rep=/scopus|wos|web of science|\bq[1-4]\b|impact\s*factor|\bscie?\b|\bif\s*[:=]?\s*\d/i.test(j),intl=rep||(!sinta&&/internasional|international|doaj/i.test(j)),
-  im=j.match(/(?:impact\s*factor|\bIF\b)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+  rep=/scopus|wos|web of science|\bq[1-4]\b|impact\s*factor|\bsjr\b|\bscie?\b|\bif\s*[:=]?\s*\d/i.test(j),intl=rep||(!sinta&&/internasional|international|doaj/i.test(j)),
+  im=j.match(/\bSJR\b\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i)||j.match(/(?:impact\s*factor|\bIF\b)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
   return{sinta,rep,intl,ifv:im?psaNum(im[1]):null,first:/pertama|first/.test(pr),corr:/korespond|correspond/.test(pr),itb:/\bitb\b|institut teknologi bandung/i.test(j),klas:!!(sinta||intl)}});
  const fc=p=>p.first&&p.corr,nat4=pubs.filter(p=>p.sinta&&p.sinta<=4&&!p.intl),unk=pubs.filter(p=>!p.klas).length,
   unkTxt=unk?" — "+unk+" artikel belum terbaca jenis jurnalnya (tulis Sinta/Scopus/WoS/Q pada kolom Jurnal)":"";
@@ -564,9 +564,9 @@ function psaEval(tg){
    pb={p,ref,st:ok?"ok":"no",ket:"Jurnal internasional: "+ni+" dari min. 1 · atau jurnal nasional Sinta 1–4: "+nat4.length+" dari min. "+need+", dengan penulis pertama & korespondensi: "+nat4.filter(fc).length+" dari min. 1"+unkTxt}}
   else if(isLK){const ri=pubs.filter(x=>x.rep),n12=pubs.filter(x=>x.sinta&&x.sinta<=2&&!x.rep),pool=[...ri,...n12],ok=(ri.length>=2||(n12.length>=2&&ri.length>=1))&&pool.some(fc);
    pb={p,ref,st:ok?"ok":"no",ket:"Internasional bereputasi: "+ri.length+" (min. 2; atau min. 1 + 2 nasional Sinta 1–2, ada: "+n12.length+") · penulis pertama & korespondensi: "+pool.filter(fc).length+" dari min. 1"+unkTxt}}
-  else{const s=pubs.filter(x=>x.rep&&x.ifv!=null&&x.ifv>=0.1),noIf=pubs.filter(x=>x.rep&&x.ifv==null).length;
-   pb=P(p,ref,[["Artikel jurnal internasional bereputasi ber-IF ≥ 0,1",s.length,5],["sebagai penulis pertama",s.filter(x=>x.first).length,1],["sebagai penulis pertama atau korespondensi",s.filter(x=>x.first||x.corr).length,2],["di jurnal luar ITB",s.filter(x=>!x.itb).length,3]],
-    (noIf?noIf+" artikel bereputasi belum mencantumkan impact factor (tulis “IF 1,2” pada kolom Jurnal)":"")+unkTxt.replace(/^ — /,noIf?"; ":""))}}
+  else{const s=pubs.filter(x=>x.rep&&x.ifv!=null&&x.ifv>=0.1),noIf=pubs.filter(x=>x.rep&&x.ifv==null).length,pool=pubs.filter(x=>x.rep&&(x.ifv==null||x.ifv>=0.1));
+   pb=P(p,ref,[["Artikel internasional bereputasi dengan SJR ≥ 0,1 (setara IF ≥ 0,1)",s.length,5],["sebagai penulis pertama",pool.filter(x=>x.first).length,1],["sebagai penulis pertama atau korespondensi",pool.filter(x=>x.first||x.corr).length,2]],
+    "jumlah peran dihitung dari "+pool.length+" artikel bereputasi"+(noIf?" ("+noIf+" di antaranya belum mencantumkan SJR, sehingga belum masuk hitungan — tulis mis. “SJR 0,45” pada kolom Jurnal)":"")+(unk?"; "+unk+" artikel belum terbaca jenis jurnalnya (tulis Sinta/Scopus/WoS/Q pada kolom Jurnal)":""))}}
  const il=late(rowsOf("activities","ilmiah")),ilAll=rowsOf("activities","ilmiah"),lvl=(l,v)=>l.filter(e=>v.includes(e.v.level||""));
  const sp=e=>/narasumber|pembicara|speaker|keynote|invited/i.test(e.v.peran||"");
  const rev=rowsOf("community","rev").length;
