@@ -165,7 +165,7 @@ research:{label:"Penelitian & Publikasi",types:{
  karya:{name:"Karya Bermanfaat (HAKI, Paten, dll.)",f:[{k:"tim",l:"Nama Tim"},{k:"jenis",l:"Jenis Karya"},{k:"judul",l:"Judul Karya",w:1},{k:"tahun",l:"Tahun"},{k:"ket",l:"Keterangan"},{k:"bukti",l:"Bukti dokumen / link"}]},
  hibRL:{name:"Rekap Hibah per Level (sejak menjadi dosen)",f:[{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"jumlah",l:"Jumlah"}]}}},
 teaching:{label:"Pengajaran",types:{
- mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"edom",l:"Nilai EDOM (skala 4, mis. 3,45)"},{k:"bukti_sk",l:"Link SK Dekan"},{k:"bukti_kq",l:"Link Kuesioner"}]},
+ mk:{name:"Mata Kuliah / Praktikum",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"mk",l:"Kode dan Nama Mata Kuliah",w:1},{k:"sem",l:"Semester/Tahun"},{k:"fak",l:"Fakultas/Sekolah"},{k:"bukti_sk",l:"Link SK Dekan"},{k:"bukti_kq",l:"Link Kuesioner"}]},
  bimb:{name:"Pembimbingan Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nama",l:"Nama Mahasiswa"},{k:"nim",l:"NIM"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"peran",l:"Peranan"},{k:"status",l:"Status (khusus S3)",o:["Telah selesai","Penelitian tahap III"]},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  uji:{name:"Penguji Mahasiswa",f:[{k:"periode",l:"Periode",o:PER},{k:"jenjang",l:"Jenjang",o:JJ},{k:"nim",l:"NIM"},{k:"nama",l:"Nama Mahasiswa"},{k:"fak",l:"Fakultas/Sekolah"},{k:"pt",l:"Perguruan Tinggi"},{k:"lulus",l:"Tahun Lulus (sem.)"},{k:"bukti",l:"Bukti dokumen (SK Dekan)"}]},
  mhs:{name:"Pembimbingan Kemahasiswaan",f:[{k:"nama",l:"Nama Kegiatan",w:1},{k:"sem",l:"Semester/Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]},
@@ -250,7 +250,7 @@ function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
 const PG=5;let pg={};
 /* Mata Kuliah: urutan semester/tahun yang sudah ada dipertahankan; data baru disisipkan menurut semester/tahun lalu kode mata kuliah */
-const semNo=t=>{t=String(t||"").toLowerCase();let m=t.match(/\b(ganjil|genap|pendek|antara)\b/);if(m)return{ganjil:1,genap:2,pendek:3,antara:3}[m[1]];m=t.match(/(?:semester|smt|sem)\.?\s*([ivx]+|\d)\b/);if(m){const r={i:1,ii:2,iii:3,iv:4,v:5,"1":1,"2":2,"3":3,"4":4}[m[1]];if(r)return r}return 9};
+const semNo=t=>{t=String(t||"").toLowerCase();let m=t.match(/\b(ganjil|genap|pendek|antara)\b/);if(m)return{ganjil:1,genap:2,pendek:3,antara:3}[m[1]];m=t.match(/(?:semester|smt|sem)\.?\s*([ivx]+|\d)\b/);if(m){const r={i:1,ii:2,iii:3,iv:4,v:5,"1":1,"2":2,"3":3,"4":4}[m[1]];if(r)return r}m=t.match(/^\s*([1-4])\s*[-\u2013\u2014\/]\s*(?:19|20)\d{2}/);if(m)return+m[1];return 9};
 const semVal=t=>{const y=String(t||"").match(/(?:19|20)\d{2}/);return y?Number(y[0])*10+semNo(t):0};
 const kodeMk=e=>{const m=String((e.v&&e.v.mk)||"").trim(),t=m.split(/\s+/)[0];return (/\d/.test(t)&&t.length<=10?t:m).toLowerCase()};
 const semKey=e=>{const v=e.v||{};return (v.periode==="Sejak menjadi dosen"?"0":"1")+"|"+(v.periode==="Sejak menjadi dosen"?"":String(v.sem||"").toLowerCase().replace(/\s+/g," ").trim())};
@@ -528,13 +528,14 @@ function psaEval(tg){
  const K=(k,items)=>out.push({k,items});
  const late=l=>l.filter(e=>!isEarly(e));
  /* ---- 1. Pengajaran dan pembimbingan ---- */
- const mk=late(rowsOf("teaching","mk")),conEdom=mk.filter(e=>psaNum(e.v.edom)!==null);
- let a1;{const p="a. Menyampaikan materi ajar (EDOM ≥ 3,00 pada 4 semester terakhir)",ref="Riwayat Hidup butir 5.1.2";
+ const mk=late(rowsOf("teaching","mk"));
+ let a1;{const p="a. Menyampaikan materi ajar (EDOM ≥ 3,00 pada 4 semester terakhir)",ref="Riwayat Hidup butir 5.1.2",
+  keys=[...new Set(mk.map(semKey))].sort((x,y)=>semVal(y.split("|")[1])-semVal(x.split("|")[1])),top=keys.slice(0,4),
+  used=mk.filter(e=>top.includes(semKey(e))),kosong=used.filter(e=>!String(e.v.bukti_kq||"").trim()).length;
   if(!mk.length)a1={p,ref,st:"no",ket:"Belum ada mata kuliah pada bagian 5.1.2 (sejak kenaikan jabatan terakhir)"};
-  else if(!conEdom.length)a1={p,ref,st:"no",ket:"Nilai EDOM belum diisi pada data Mata Kuliah (kolom “Nilai EDOM”)"};
-  else{const keys=[...new Set(conEdom.map(semKey))].sort((x,y)=>semVal(y.split("|")[1])-semVal(x.split("|")[1])).slice(0,4),
-   used=conEdom.filter(e=>keys.includes(semKey(e))),vals=used.map(e=>psaNum(e.v.edom)),mn=Math.min(...vals),low=vals.filter(x=>x<3).length,miss=mk.filter(e=>keys.includes(semKey(e))&&psaNum(e.v.edom)===null).length;
-   a1={p,ref,st:low?"no":"ok",ket:(low?low+" dari "+vals.length+" mata kuliah bernilai di bawah 3,00":"Seluruh "+vals.length+" nilai EDOM ≥ 3,00")+" (terendah "+psaFmt(mn)+", "+keys.length+" semester terakhir)"+(miss?" — "+miss+" mata kuliah belum ada nilai EDOM":"")}}}
+  else if(keys.length<4)a1={p,ref,st:"no",ket:"Baru "+keys.length+" semester tercatat pada 5.1.2 (perlu 4 semester terakhir)"};
+  else if(kosong)a1={p,ref,st:"no",ket:kosong+" dari "+used.length+" mata kuliah pada 4 semester terakhir belum memiliki link kuesioner"};
+  else a1={p,ref,st:"ok",ket:"Link kuesioner terisi untuk seluruh "+used.length+" mata kuliah pada 4 semester terakhir"}}
  const buku=rowsOf("research","buku").length;
  const bl=late(rowsOf("teaching","bimb")),lb=j=>bl.filter(e=>(e.v.jenjang||"S1")===j).length,sdB=j=>psaSD("teaching","bimbR","bimb","jenjang",j,"S1"),
   itb=e=>{const t=psaN(e.v.pt);return !t||/itb|institut teknologi bandung/.test(t)},s3B=bl.filter(e=>e.v.jenjang==="S3"&&itb(e)).length;
