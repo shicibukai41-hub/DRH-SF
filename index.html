@@ -159,7 +159,7 @@ career:{label:"Pendidikan & Karier",types:{
  jab:{name:"Jabatan Akademik Dosen",f:[{k:"nama",l:"Nama Jabatan"},{k:"tmt",l:"TMT (Terhitung Mulai Tanggal)"}]},
  kerja:{name:"Riwayat Kerja Institusional & Penugasan",f:[{k:"nama",l:"Nama Jabatan"},{k:"inst",l:"Institusi"},{k:"tahun",l:"Tahun"},{k:"bukti",l:"Bukti dokumen / link"}]}}},
 research:{label:"Penelitian & Publikasi",types:{
- pub:{name:"Publikasi Jurnal",f:[{k:"kat",l:"Kategori publikasi (bagian VII DRH)",o:PUBKAT,w:1},{k:"penulis",l:"Nama Penulis",w:1},{k:"judul",l:"Judul Artikel",w:1},{k:"tahun",l:"Tahun terbit (untuk pengurutan)"},{k:"jurnal",l:"Jurnal (nama; no.; vol./tahun; ISSN; peringkat; link)",a:1},{k:"peran",l:"Peranan"},{k:"bukti_artikel",l:"Link Artikel",bg:"Bukti dokumen"},{k:"bukti_info",l:"Link Informasi Jurnal",bg:"Bukti dokumen"},{k:"bukti_koresp",l:"Link Bukti Korespondensi",bg:"Bukti dokumen"},{k:"bukti_turnitin",l:"Link Turnitin",bg:"Bukti dokumen"}]},
+ pub:{name:"Publikasi Jurnal",f:[{k:"kat",l:"Kategori publikasi (bagian VII DRH)",o:PUBKAT,w:1},{k:"penulis",l:"Nama Penulis",w:1},{k:"judul",l:"Judul Artikel",w:1},{k:"tahun",l:"Tahun terbit (untuk pengurutan)"},{k:"jurnal",l:"Jurnal (nama; no.; vol./tahun; ISSN; peringkat; link)",a:1},{k:"peran",l:"Peranan"},{k:"bukti_info",l:"Link Informasi Jurnal dan Artikel",bg:"Bukti dokumen"},{k:"bukti_koresp",l:"Link Bukti Korespondensi",bg:"Bukti dokumen"},{k:"bukti_turnitin",l:"Link Turnitin",bg:"Bukti dokumen"}]},
  buku:{name:"Buku / Materi Ajar",f:[{k:"penyusun",l:"Nama Penyusun"},{k:"judul",l:"Judul"},{k:"tempat",l:"Tempat dan Tahun Publikasi"},{k:"penerbit",l:"Penerbit"},{k:"bukti",l:"Bukti dokumen / link"}]},
  hibah:{name:"Hibah Penelitian",f:[{k:"periode",l:"Periode",o:PER},{k:"tim",l:"Tim Peneliti"},{k:"peran",l:"Peranan"},{k:"judul",l:"Judul Penelitian",w:1},{k:"level",l:"Level",o:["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"]},{k:"tahun",l:"Tahun/Periode"},{k:"bukti",l:"Bukti dokumen / link"}]},
  karya:{name:"Karya Bermanfaat (HAKI, Paten, dll.)",f:[{k:"tim",l:"Nama Tim"},{k:"jenis",l:"Jenis Karya"},{k:"judul",l:"Judul Karya",w:1},{k:"tahun",l:"Tahun"},{k:"ket",l:"Keterangan"},{k:"bukti",l:"Bukti dokumen / link"}]},
@@ -192,7 +192,7 @@ const KEY="portofolio-dosen:v1",KEYD="portofolio-dosen:dosen:v1",KEYA="portofoli
 const BASE={id:"d0",nama:DATA.name,nip:DATA.nip||"",school:DATA.school||"",inst:DATA.institution||"",kk:"",jab:"",email:""};
 let entries=[],dosens=[BASE],cur="d0",storeOK=true,editId=null,editD=null,ctxSec=null,tt;
 /* Mata Kuliah: isian lama "bukti" dipindah ke "Link SK Dekan" (bukti_sk) agar data lama tidak hilang */
-const fixE=e=>{if(e.sec==="research"&&e.type==="pub"&&e.v&&e.v.bukti!==undefined){if(e.v.bukti&&!e.v.bukti_artikel)e.v.bukti_artikel=e.v.bukti;delete e.v.bukti}if(e.sec==="teaching"&&e.type==="mk"&&e.v&&e.v.bukti!==undefined){if(e.v.bukti&&!e.v.bukti_sk)e.v.bukti_sk=e.v.bukti;delete e.v.bukti}return e};
+const fixE=e=>{if(e.sec==="research"&&e.type==="pub"&&e.v&&e.v.bukti!==undefined){if(e.v.bukti&&!e.v.bukti_artikel)e.v.bukti_artikel=e.v.bukti;delete e.v.bukti}if(e.sec==="research"&&e.type==="pub"&&e.v&&e.v.bukti_artikel!==undefined){const a=String(e.v.bukti_artikel||"").trim(),i=String(e.v.bukti_info||"").trim();e.v.bukti_info=!a?i:!i||i===a?a:i+" "+a;delete e.v.bukti_artikel}if(e.sec==="teaching"&&e.type==="mk"&&e.v&&e.v.bukti!==undefined){if(e.v.bukti&&!e.v.bukti_sk)e.v.bukti_sk=e.v.bukti;delete e.v.bukti}return e};
 const validE=e=>e&&typeof e==="object"&&e.id&&CFG[e.sec]&&CFG[e.sec].types[e.type]&&e.v&&typeof e.v==="object"&&!!fixE(e);
 const validD=x=>x&&typeof x==="object"&&x.id&&typeof x.nama==="string";
 try{const j=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(j))entries=j.filter(validE)}catch(_){}
@@ -396,7 +396,7 @@ function dedupeResearch(){let n=0;const seen=new Map();
  return n}
 /* Isian Jurnal & Bukti pada data Publikasi Jurnal yang sama bersifat bersama: bila diubah di satu dosen, salinannya di portofolio
    dosen lain ikut diperbarui (hanya kolom yang benar-benar diubah; Peranan tetap pribadi). Data yang sama dikenali dari kelompok sinkron (g) atau judul. */
-const SHAREF={"research|pub":["jurnal","bukti_artikel","bukti_info","bukti_koresp","bukti_turnitin"]};
+const SHAREF={"research|pub":["jurnal","bukti_info","bukti_koresp","bukti_turnitin"]};
 function propagateShared(e,oldKey,ov){const F=SHAREF[e.sec+"|"+e.type];if(!F)return[];
  const ch=F.filter(k=>(ov[k]||"")!==(e.v[k]||""));if(!ch.length)return[];
  const nk=dupKeyOf(e.sec,e.type,e.v),names=[];
@@ -625,7 +625,7 @@ function buildDoc(){
  const HL=["Regional/ITB","Nasional","Internasional","Kerja sama dengan lembaga lain"];
  const eBim=early("teaching","bimb"),eUji=early("teaching","uji"),eIlm=early("activities","ilmiah"),eHib=early("research","hibah"),eAbd=early("community","abdi");
  const rBim=rowsOf("teaching","bimbR"),rUji=rowsOf("teaching","ujiR"),rIlm=rowsOf("activities","ilmR"),rHL=rowsOf("research","hibRL"),rAbd=rowsOf("community","abdR");
- const pubCols=[C("Nama Penulis","penulis",{b:1,w:17}),C("Judul artikel","judul",{w:21}),C("Nama jurnal; No. Publikasi; Vol./tahun; ISSN; Tanggal; dan peringkat akreditasi; link","jurnal",{w:24}),C("Peranan (penulis pertama, corresponding author, penulis anggota)","peran",{c:1,w:10}),{h:"Bukti dokumen (artikel, informasi jurnal, kinerja jurnal, turnitin dan bukti korespondensi)",w:28,m:[["Link Artikel","bukti_artikel"],["Link Informasi Jurnal","bukti_info"],["Link Bukti Korespondensi","bukti_koresp"],["Link Turnitin","bukti_turnitin"]]}];
+ const pubCols=[C("Nama Penulis","penulis",{b:1,w:17}),C("Judul artikel","judul",{w:21}),C("Nama jurnal; No. Publikasi; Vol./tahun; ISSN; Tanggal; dan peringkat akreditasi; link","jurnal",{w:24}),C("Peranan (penulis pertama, corresponding author, penulis anggota)","peran",{c:1,w:10}),{h:"Bukti dokumen (artikel, informasi jurnal, kinerja jurnal, turnitin dan bukti korespondensi)",w:28,m:[["Link Informasi Jurnal dan Artikel","bukti_info"],["Link Bukti Korespondensi","bukti_koresp"],["Link Turnitin","bukti_turnitin"]]}];
  const ilmCols=[C("Nama Kegiatan","nama",{w:30}),C("Level (regional, nasional atau internasional)","level",{c:1,w:13}),C("Tempat, Tahun","tempat",{c:1,w:16}),C("Peranan (peserta, narasumber, pembicara dan lainnya)","peran",{c:1,w:14}),BK("Bukti dokumen (sertifikat, surat keterangan atau sejenisnya)")];
  const hibCols=[C("Tim Peneliti","tim",{b:1,w:16}),C("Peranan (ketua atau anggota)","peran",{c:1,w:10}),C("Judul Penelitian","judul",{b:1,w:28}),C("Level","level",{c:1,w:13}),C("Tahun/Periode","tahun",{c:1,w:9}),BK("Bukti dokumen (surat keterangan atau kontrak)")];
  const abdCols=[C("Tim","tim",{b:1,w:24}),C("Peranan (ketua/anggota/instruktur/tenaga ahli atau lainnya)","peran",{c:1,w:13}),C("Nama Kegiatan","nama",{w:27}),C("Tempat","tempat",{c:1,w:13}),C("Tahun","tahun",{c:1,w:7}),BK("Bukti dokumen (surat keterangan atau kontrak)")];
@@ -1215,7 +1215,7 @@ function pbBangun(r){   /* r: nilai per tipe kolom -> isian form Publikasi Jurna
  const doi=g("doi").replace(/^https?:\/\/(dx\.)?doi\.org\//i,""),lk=g("link");
  const bukti=lk&&/^https?:\/\//i.test(lk)?lk:doi?"https://doi.org/"+doi:lk;
  const pen=sel(r.penulis||r.penulis2||"").replace(/\s*\(\d{6,}\)/g,"").replace(/\s*;\s*/g,", ");
- return{penulis:pen,judul:g("judul"),tahun:th,jurnal,bukti_artikel:bukti,peran:g("peran"),kat:g("kat")}}
+ return{penulis:pen,judul:g("judul"),tahun:th,jurnal,bukti_info:bukti,peran:g("peran"),kat:g("kat")}}
 function pbBaca(wb){const out=[];
  wb.SheetNames.forEach(n=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""});
   let hi=-1,map=null;
