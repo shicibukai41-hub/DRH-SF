@@ -396,7 +396,7 @@ function dedupeResearch(){let n=0;const seen=new Map();
  return n}
 /* Isian Jurnal & Bukti pada data Publikasi Jurnal yang sama bersifat bersama: bila diubah di satu dosen, salinannya di portofolio
    dosen lain ikut diperbarui (hanya kolom yang benar-benar diubah; Peranan tetap pribadi). Data yang sama dikenali dari kelompok sinkron (g) atau judul. */
-const SHAREF={"research|pub":["jurnal","bukti_info","bukti_koresp","bukti_turnitin"]};
+const SHAREF={"research|pub":["jurnal","bukti_info","bukti_turnitin"]};
 function propagateShared(e,oldKey,ov){const F=SHAREF[e.sec+"|"+e.type];if(!F)return[];
  const ch=F.filter(k=>(ov[k]||"")!==(e.v[k]||""));if(!ch.length)return[];
  const nk=dupKeyOf(e.sec,e.type,e.v),names=[];
@@ -430,7 +430,7 @@ function syncEntry(e,st){const f=NAMEF[e.sec+"|"+e.type],made=[];if(!f)return ma
   if(st)st.match++;
   if((D.skip||[]).some(i=>i===e.g||(key&&i===key))){if(st)st.skip++;return}
   if(entries.some(x=>x.d===D.id&&x.sec===e.sec&&x.type===e.type&&(x.g===e.g||(key&&sKey(x)===key)||(dk&&dupKeyOf(x.sec,x.type,x.v)===dk)))){if(st){st.ada++;(st.dups=st.dups||[]).push(D.nama)}return}
-  const v={...e.v};delete v.peran; /* peranan bersifat pribadi, diisi sendiri oleh tiap dosen */
+  const v={...e.v};delete v.peran;delete v.bukti_koresp; /* peranan & bukti korespondensi bersifat pribadi (peran tiap dosen berbeda), diisi sendiri oleh tiap dosen */
   entries.push({id:uid(),sec:e.sec,type:e.type,v,t:Date.now(),d:D.id,g:e.g});made.push(D.nama)});
  return made}
 /* periksa semua data penelitian/publikasi/pengabdian milik semua dosen; kembalikan jumlah salinan baru */
