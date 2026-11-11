@@ -253,7 +253,7 @@ const PG=5;let pg={};
 const semNo=t=>{t=String(t||"").toLowerCase();let m=t.match(/\b(ganjil|genap|pendek|antara)\b/);if(m)return{ganjil:1,genap:2,pendek:3,antara:3}[m[1]];m=t.match(/(?:semester|smt|sem)\.?\s*([ivx]+|\d)\b/);if(m){const r={i:1,ii:2,iii:3,iv:4,v:5,"1":1,"2":2,"3":3,"4":4}[m[1]];if(r)return r}m=t.match(/^\s*([1-4])\s*[-\u2013\u2014\/]\s*(?:19|20)\d{2}/);if(m)return+m[1];return 9};
 const semVal=t=>{const y=String(t||"").match(/(?:19|20)\d{2}/);return y?Number(y[0])*10+semNo(t):0};
 const kodeMk=e=>{const m=String((e.v&&e.v.mk)||"").trim(),t=m.split(/\s+/)[0];return (/\d/.test(t)&&t.length<=10?t:m).toLowerCase()};
-const semKey=e=>{const v=e.v||{};return (v.periode==="Sejak menjadi dosen"?"0":"1")+"|"+(v.periode==="Sejak menjadi dosen"?"":String(v.sem||"").toLowerCase().replace(/\s+/g," ").trim())};
+const semKey=e=>{const v=e.v||{};return (v.periode==="Sejak menjadi dosen"?"0":"1")+"|"+String(v.sem||"").toLowerCase().replace(/\s+/g," ").trim()};
 const kodeCmp=(a,b)=>kodeMk(a).localeCompare(kodeMk(b),"id",{numeric:true});
 /* Tampilan: urutan periode & semester/tahun mengikuti urutan data yang sudah tersimpan (tidak diubah);
    di dalam satu semester/tahun data diurutkan menurut kode mata kuliah */
@@ -1060,7 +1060,7 @@ function semesterDari(pages,namaFile){
  m=String(namaFile||"").match(/(\d{4})\D+(\d{4}).*?sem\w*\D*(\d|[ivx]+)/i);
  return m?"Semester "+m[3].toUpperCase()+" "+m[1]+"/"+m[2]:""}
 function terapkan(plan,sem,periode){
- const awal=periode==="Sejak menjadi dosen";   // sejak menjadi dosen: satu baris per matakuliah (tanpa semester); kenaikan jabatan: per semester
+ const awal=periode==="Sejak menjadi dosen";   // semester dicatat di kartu untuk kedua periode; saat cetak, "sejak menjadi dosen" tetap tampil tanpa kolom semester (satu baris per matakuliah)
  let tambah=0,lewat=0,baru=0;
  plan.forEach(r=>{if(r.target==="")return;
   let id=r.target;
@@ -1068,10 +1068,10 @@ function terapkan(plan,sem,periode){
   if(id==="__new"){const n={id:"d"+uid(),nama:r.nama,nip:"",school:BASE.school,inst:BASE.inst,kk:"",jab:"",email:""};dosens.push(n);id=n.id;baru++}
   const ada=new Set();
   entries.filter(e=>e.d===id&&e.sec==="teaching"&&e.type==="mk"&&((e.v.periode==="Sejak menjadi dosen")===awal)).forEach(e=>{
-   const aw=awal?"":(e.v.sem||""),mk=String(e.v.mk||"");ada.add(aw+"|"+mk.split(" ")[0]);ada.add(aw+"|"+mk)});
-  r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=(awal?"":sm)+"|"+(m.kode||label);
+   const aw=e.v.sem||"",mk=String(e.v.mk||"");ada.add(aw+"|"+mk.split(" ")[0]);ada.add(aw+"|"+mk)});
+  r.mk.forEach(m=>{const sm=m.sem||sem,label=(m.kode?m.kode+" ":"")+m.nama,key=sm+"|"+(m.kode||label);
    if(ada.has(key)){lewat++;return}ada.add(key);
-   const v={mk:label,periode:periode};if(!awal)v.sem=sm;if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
+   const v={mk:label,periode:periode};v.sem=sm;if(m.jenjang)v.jenjang=m.jenjang;if(m.fak)v.fak=m.fak;
    {const ne={id:uid(),sec:"teaching",type:"mk",v:v,t:Date.now(),d:id};entries.push(ne);placeMk(ne)}tambah++})});
  persist();refresh();return{tambah,lewat,baru}}
 window.imporSK={parseSK,rencana,semesterDari,terapkan,parseMahasiswa,rencanaMhs,terapkanMhs,bukaMhs};
@@ -1176,7 +1176,7 @@ const opsi=(t,r)=>{const baruOk=!r||r.status!=="gelar",sar=(r&&r.saran)||[];
 function ringkas(){const a=plan.filter(r=>r.target!=="");
  $("impSum").textContent=a.length+" dosen dipilih, "+a.reduce((s,r)=>s+r.mk.length,0)+" matakuliah akan ditambahkan (duplikat dilewati sesuai periode)."
  const aw=$("impPer").value==="Sejak menjadi dosen";
- $("impPerNote").textContent=aw?"Sejak menjadi dosen: matakuliah yang sama hanya dicatat sekali, jadi dilewati jika sudah ada di semester mana pun. Semester tidak dicatat.":"Sejak kenaikan jabatan terakhir: matakuliah yang sama tetap ditambahkan untuk semester baru; hanya dilewati jika sudah ada di semester yang sama."}
+ $("impPerNote").textContent=aw?"Sejak menjadi dosen: semester tetap dicatat di kartu agar terlihat tercatat di semester berapa; saat dicetak, matakuliah yang sama hanya tampil sekali dan kolom semester tidak ditampilkan. Dilewati hanya jika sudah ada di semester yang sama.":"Sejak kenaikan jabatan terakhir: matakuliah yang sama tetap ditambahkan untuk semester baru; hanya dilewati jika sudah ada di semester yang sama."}
 $("impPer").onchange=()=>ringkas();
 function gambar(){$("impList").innerHTML=plan.map((r,i)=>'<div class="improw"><select data-i="'+i+'">'+opsi(r.target,r)+'</select>'+infoDosen(r,r.mk.length+" matakuliah",r.mk.slice(0,2).map(m=>(m.kode?m.kode+" ":"")+m.nama))+'</div>').join("");ringkas()}
 document.body.insertAdjacentHTML("beforeend",'<input type="file" id="fPdf" hidden>');
@@ -1292,7 +1292,7 @@ $("impSkip").onclick=()=>{plan.forEach(r=>{if(!r.cocok)r.target=""});gambar()};
 $("impNew").onclick=()=>{plan.forEach(r=>{if(!r.cocok&&r.status==="ok")r.target="__new"});gambar()};
 $("impCancel").onclick=()=>$("dlgImp").close();
 $("impGo").onclick=()=>{const sem=$("impSem").value.trim(),per=$("impPer").value;
- if(per!=="Sejak menjadi dosen"&&!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
+ if(!sem&&plan.some(r=>r.target!==""&&r.mk.some(m=>!m.sem))){toast("Isi Semester/Tahun dulu.");return}
  if(!plan.some(r=>r.target!=="")){toast("Belum ada dosen yang dipilih.");return}
  const r=terapkan(plan,sem,per);$("dlgImp").close();
  toast(r.tambah+" matakuliah ditambahkan"+(r.baru?", "+r.baru+" profil baru":"")+(r.lewat?", "+r.lewat+" sudah ada (dilewati)":"")+".")};
