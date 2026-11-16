@@ -1225,18 +1225,35 @@ function pbBaca(wb){const out=[];
   for(let i=hi+1;i<rows.length;i++){const r={};Object.keys(map).forEach(k=>r[k]=rows[i][map[k]]);
    if(!sel(r.judul))continue;out.push(pbBangun(r))}});
  return out}
+/* apakah dosen aktif tercantum di daftar penulis baris ini? (mengenali "Rika Hartati" maupun format Scopus "Hartati R.") */
+function pbPenulisCocok(penulis){
+  const toks=kunci(coreName(curD().nama)).split(" ").filter(Boolean);
+  if(!toks.length) return true;
+  const segs=String(penulis||"").split(/\s*;\s*/).map(kunci).filter(Boolean);
+  if(segs.some(a=>{const at=a.split(" ");return toks.every(t=>at.includes(t))})) return true;   // "Hartati, Rika" / "Rika Hartati"
+  const authors=String(penulis||"").split(/\s*[;,]\s*/).map(kunci).filter(Boolean);
+  return authors.some(a=>{
+    const at=a.split(" ");
+    if(toks.every(t=>at.includes(t))) return true;
+    const sur=toks[toks.length-1], rest=toks.slice(0,-1);
+    const ins=at.filter(x=>x.length<=2);
+    return at.includes(sur) && rest.length>0 &&
+           rest.every(t=>at.includes(t)||ins.some(i=>i[0]===t[0]));
+  });
+}
 function pbGambar(){
  const kat=$("pbKat").value,per=$("pbPeran").value.trim();
- const D=curD(),seen=new Set();let baru=0,ada=0,dalam=0;
+ const D=curD(),seen=new Set();let baru=0,ada=0,dalam=0,bukan=0;
  pbPlan.items.forEach(it=>{const v=Object.assign({},it.v,{kat:it.v.kat||kat,peran:it.v.peran||per});it.fin=v;
   const k=dupKeyOf("research","pub",v);
-  if(findDup("research","pub",v,cur,null)){it.st="ada";ada++}
+  if(!pbPenulisCocok(v.penulis)){it.st="bukan";bukan++}
+  else if(findDup("research","pub",v,cur,null)){it.st="ada";ada++}
   else if(k&&seen.has(k)){it.st="dalam";dalam++}
   else{it.st="baru";baru++;if(k)seen.add(k)}});
  pbPlan.baru=baru;
- $("pbSum").innerHTML="<b>"+baru+"</b> data baru akan diimpor ke <b>"+esc(D.nama)+"</b> \u2022 <b>"+ada+"</b> sudah ada (dilewati)"+(dalam?" \u2022 <b>"+dalam+"</b> ganda di dalam file (dilewati)":"")+".";
+ $("pbSum").innerHTML="<b>"+baru+"</b> data baru akan diimpor ke <b>"+esc(D.nama)+"</b> \u2022 <b>"+ada+"</b> sudah ada (dilewati)"+(dalam?" \u2022 <b>"+dalam+"</b> ganda di dalam file (dilewati)":"")+(bukan?" \u2022 <b>"+bukan+"</b> tidak memuat nama dosen ini (dilewati)":"")+".";
  $("pbGo").disabled=!baru;
- const badge={baru:'<span style="color:#067647;font-weight:600">Baru</span>',ada:'<span style="color:#b42318;font-weight:600">Sudah ada</span>',dalam:'<span style="color:#b54708;font-weight:600">Ganda di file</span>'};
+ const badge={baru:'<span style="color:#067647;font-weight:600">Baru</span>',ada:'<span style="color:#b42318;font-weight:600">Sudah ada</span>',dalam:'<span style="color:#b54708;font-weight:600">Ganda di file</span>',bukan:'<span style="color:#667085;font-weight:600">Bukan penulis</span>'};
  $("pbList").innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left"><th style="padding:4px">Status</th><th style="padding:4px">Judul</th><th style="padding:4px">Isian Jurnal</th></tr></thead><tbody>'+pbPlan.items.slice(0,200).map(it=>'<tr style="border-top:1px solid var(--line);vertical-align:top"><td style="padding:4px;white-space:nowrap">'+badge[it.st]+'</td><td style="padding:4px">'+esc(it.fin.judul)+'<div class="muted">'+esc(it.fin.penulis)+'</div></td><td style="padding:4px">'+esc(it.fin.jurnal)+'</td></tr>').join("")+'</tbody></table>'+(pbPlan.items.length>200?'<div class="muted" style="padding:6px">Menampilkan 200 baris pertama dari '+pbPlan.items.length+'.</div>':"")}
 async function imporPubExcel(f){
  if(!window.XLSX){toast("Pembaca Excel belum termuat. Periksa koneksi internet lalu muat ulang halaman.");return}
@@ -1264,9 +1281,9 @@ $("pbGo").onclick=()=>{if(!pbPlan)return;
  const nw=pbPlan.items.filter(it=>it.st==="baru"),sst={cek:0,match:0,skip:0,ada:0},sync=new Set(),dups=new Set();let tm=Date.now();
  nw.forEach(it=>{const ne={id:uid(),sec:"research",type:"pub",v:it.fin,t:tm++,d:cur};entries.push(ne);
   const st={cek:0,match:0,skip:0,ada:0},sy=syncEntry(ne,st)||[];sy.forEach(x=>sync.add(x));(st.dups||[]).forEach(x=>dups.add(x))});
- const lewat=pbPlan.items.length-nw.length;
+ const lewat=pbPlan.items.filter(it=>it.st==="ada"||it.st==="dalam").length,bkn=pbPlan.items.filter(it=>it.st==="bukan").length;
  persist();refresh();$("dlgPub").close();pbPlan=null;
- toast(nw.length+" publikasi jurnal diimpor"+(lewat?", "+lewat+" dilewati karena sudah ada":"")+"."+(sync.size?" Disalin juga ke portofolio: "+[...sync].join(", ")+".":"")+(dups.size?" Data sudah ada di portofolio: "+[...dups].join(", ")+" (tidak digandakan).":""))};
+ toast(nw.length+" publikasi jurnal diimpor"+(lewat?", "+lewat+" dilewati karena sudah ada":"")+(bkn?", "+bkn+" dilewati karena bukan karya dosen ini":"")+"."+(sync.size?" Disalin juga ke portofolio: "+[...sync].join(", ")+".":"")+(dups.size?" Data sudah ada di portofolio: "+[...dups].join(", ")+" (tidak digandakan).":""))};
 $("fPdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
  const mode=impMode;
  if(/\.(xlsx|xls|xlsm|csv)$/i.test(f.name)){await imporExcel(f,mode);return}
