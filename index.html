@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--ink:#172033;--muted:#667085;--line:#e5e7eb;--blue:#174ea6;--soft:#e8f0fe}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,Arial}
-header{color:#fff;background:linear-gradient(135deg,#102a56,#174ea6);padding:46px 20px}.wrap{max-width:1180px;margin:auto}
+header{color:#fff;background:linear-gradient(135deg,#102a56,#174ea6);padding:46px 20px}.wrap{max-width:1560px;width:100%;margin:auto}
 .hero{display:flex;gap:24px;align-items:center}.avatar{width:92px;height:92px;border-radius:22px;background:#ffffff22;border:1px solid #ffffff44;display:grid;place-items:center;font-size:30px;font-weight:800}
 h1{margin:0 0 6px;font-size:clamp(27px,4vw,44px)}.sub{font-size:17px;opacity:.92}
 nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:5}.nav{display:flex;gap:6px;overflow:auto;padding:9px}
@@ -84,6 +84,20 @@ nav button.navprint{margin-left:auto;border:1px solid var(--blue);color:var(--bl
 .psa-b{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
 .psa-b.ok{background:#ecfdf3;color:#067647}.psa-b.no{background:#fef3f2;color:#b42318}.psa-b.info{background:#f2f4f7;color:#475467}.psa-b.na{background:#f2f4f7;color:#667085;font-weight:600}
 .psa-i .psa-dot.na~.psa-c .psa-p,.psa-i .psa-dot.na~.psa-c .psa-t{color:var(--muted);font-weight:400}
+
+/* tampilan tabel data: lebar, ringkas, kolom Aksi selalu terlihat */
+main.wrap{padding-left:clamp(12px,2vw,32px);padding-right:clamp(12px,2vw,32px)}
+.table-wrap{max-width:100%;overflow-x:auto}
+.table-wrap th,.table-wrap td{padding:8px 11px}
+.table-wrap td{line-height:1.45}
+.cl{max-width:320px;max-height:4.4em;overflow:hidden;overflow-wrap:anywhere;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;cursor:zoom-in}
+.cl.open{max-height:none;display:block;-webkit-line-clamp:unset;line-clamp:unset;cursor:zoom-out}
+.cl a{overflow-wrap:anywhere;word-break:break-all}
+td.act,th.act{position:sticky;right:0;z-index:2;white-space:nowrap;background:#fff;box-shadow:-8px 0 8px -8px #14233c33}
+th.act{background:#f8fafc}
+tr:hover td.act{background:#f8fafc}
+td.act button{margin:0 4px 0 0}
+@media(max-width:600px){.cl{max-width:220px}}
 </style></head><body>
 <header><div class="wrap hero"><div class="avatar">RH</div><div><h1 id="name"></h1><div class="sub" id="institution"></div><div id="nip"></div></div></div></header>
 <nav><div class="wrap nav" id="nav"></div></nav>
@@ -230,7 +244,7 @@ function renderDosen(){const q=dq.trim().toLowerCase(),n=id=>entries.filter(e=>e
  $("dosenCount").textContent=q?list.length+" / "+dosens.length:dosens.length;
  $("dosenRows").innerHTML=list.length?list.map(x=>`<div class="drow${x.id===cur?" on":""}" data-pick="${esc(x.id)}"><div class="av-s">${esc(ini(x.nama))}</div><div class="dinfo"><b>${esc(x.nama)}</b><div class="label">${esc(where(x," • ")||"—")}${x.nip?" • NIP: "+esc(x.nip):""} • ${n(x.id)} data</div></div><div class="dbtn"><button class="btn sm" data-pick="${esc(x.id)}">Lihat profil</button><button class="btn sm" data-editdosen="${esc(x.id)}">Ubah</button>${dosens.length>1?`<button class="btn sm danger" data-deldosen="${esc(x.id)}">Hapus</button>`:""}</div></div>`).join(""):'<div class="empty" style="border:0">Tidak ada dosen yang cocok dengan pencarian.</div>'}
 const DRH=[["nama","Nama lengkap dan gelar"],["ttl","Tempat/tanggal lahir"],["nip","NIP/Nopeg"],["school","Fakultas/Sekolah"],["tmt","Tanggal pengangkatan sebagai dosen tetap ITB"],["kk","Kelompok Keahlian/Keilmuan"],["bidang","Bidang Keahlian sesuai peta jalan KK"],["sertNo","Sertifikat dosen profesional: Nomor"],["sertTgl","Sertifikat dosen profesional: Tanggal/tahun"],["jab","Jabatan Fungsional Saat Ini"],["jabUsul","Jabatan Fungsional yang Diusulkan"]];
-function renderDRH(){const D=curD();$("drhCard").innerHTML=`<div class="card-head"><h3>Data Diri (sesuai DRH)</h3><button class="btn sm" data-editdosen="${esc(D.id)}">Ubah</button></div><div class="table-wrap"><table><tbody>${DRH.map(([k,l])=>`<tr><th class="drh-l">${esc(l)}</th><td>${D[k]?cell(D[k]):'<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table></div>`}
+function renderDRH(){const D=curD();$("drhCard").innerHTML=`<div class="card-head"><h3>Data Diri (sesuai DRH)</h3><button class="btn sm" data-editdosen="${esc(D.id)}">Ubah</button></div><div class="table-wrap"><table><tbody>${DRH.map(([k,l])=>`<tr><th class="drh-l">${esc(l)}</th><td>${D[k]?cell(D[k],1):'<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table></div>`}
 function renderProfile(){const D=curD(),tg=[D.kk,D.jab].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
  $("profileCard").innerHTML=`<div class="label">Profil dosen yang sedang dilihat</div><h3>${esc(D.nama)}</h3><p>${esc(where(D,", "))}</p>${D.email?`<p>${esc(D.email)}</p>`:""}<span class="tag">Portofolio Akademik</span>${tg}`}
 
@@ -250,7 +264,7 @@ $("profile").insertAdjacentHTML("beforeend",'<div class="card"><div class="card-
 {const b=document.createElement("button");b.className="navprint";b.textContent="🖨 Cetak PDF";b.dataset.print="1";$("nav").appendChild(b)}
 
 /* ===== Render ===== */
-function cell(v){v=String(v||"");return /^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>")}
+function cell(v,full){v=String(v||"");const h=/^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v).replace(/\n/g,"<br>");return full?h:`<div class="cl" title="${esc(v)}">${h}</div>`}
 const acts=id=>`<button class="btn sm" data-edit="${id}">Ubah</button><button class="btn sm danger" data-del="${id}">Hapus</button>`;
 const PG=5;let pg={};
 /* Mata Kuliah: urutan semester/tahun yang sudah ada dipertahankan; data baru disisipkan menurut semester/tahun lalu kode mata kuliah */
@@ -290,13 +304,13 @@ function pager(key,p,pages,total){
  const nums=[];for(let i=1;i<=pages;i++){if(pages<=7||i===1||i===pages||Math.abs(i-p)<=1)nums.push(i);else if(nums[nums.length-1]!=="…")nums.push("…")}
  const b=(n,l,dis,cls)=>`<button type="button" class="btn sm${cls||""}" data-pg="${esc(key)}" data-p="${n}"${dis?" disabled":""}>${l}</button>`;
  return `<div class="pager"><span class="pi">${(p-1)*PG+1}–${Math.min(p*PG,total)} dari ${total}</span>${b(p-1,"‹",p===1)}${nums.map(n=>n==="…"?'<span class="gap">…</span>':b(n,n,0,n===p?" primary":"")).join("")}${b(p+1,"›",p===pages)}</div>`}
-const lnk=v=>{v=String(v||"").trim();return !v?"-":/^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">Buka tautan</a>`:esc(v)};
+const lnk=v=>{v=String(v||"").trim();return !v?"-":/^https?:\/\/\S+$/i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener" title="${esc(v)}">Buka tautan</a>`:`<span class="cl" title="${esc(v)}">${esc(v)}</span>`};
 function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
  const FS=T.f.filter(f=>!f.x||list.some(e=>e.v[f.k]));
  const COLS=[];FS.forEach(f=>{if(!f.bg)COLS.push({f});else if(!COLS.some(c=>c.bg===f.bg))COLS.push({bg:f.bg,fs:FS.filter(x=>x.bg===f.bg)})});
  const pages=Math.max(1,Math.ceil(list.length/PG)),p=Math.min(Math.max(1,pg[key]||1),pages);pg[key]=p;
  const off=(p-1)*PG,part=list.slice(off,off+PG);
- const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th>${esc(c.bg||c.f.l)}</th>`).join("")}<th>Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
+ const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th>${esc(c.bg||c.f.l)}</th>`).join("")}<th class="act">Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
  const imp=s==="teaching"&&["mk","bimb","uji"].includes(k)?`<button type="button" class="btn sm" data-imp="${k}" title="Impor ${esc(T.name)} dari file SK (PDF / Excel)">\u2b06 Impor</button><button type="button" class="btn sm" data-tpl="${k}" title="Unduh contoh format Excel untuk impor ${esc(T.name)}">\u2b07 Template</button>`:"";
  return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${imp}<button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></span></div>${tbl}</div>`}
 function renderSec(s){$("e-"+s).innerHTML=s==="profile"?psaCard():Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
@@ -1408,4 +1422,5 @@ $("mGo").onclick=()=>{const o=mOpt();
 refresh();
 {const dd=dedupeResearch();if(syncAll()||dd){applying=true;persist();applying=false}
 refresh();if(dd)toast(dd+" data penelitian/publikasi ganda digabung menjadi 1.")}
+document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest(".cl");if(c&&!e.target.closest("a"))c.classList.toggle("open")});
 </script></body></html>
