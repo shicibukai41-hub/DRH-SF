@@ -98,6 +98,12 @@ th.act{background:#f8fafc}
 tr:hover td.act{background:#f8fafc}
 td.act button{margin:0 4px 0 0}
 @media(max-width:600px){.cl{max-width:220px}}
+/* kolom pendek (NIM, tahun, jenjang) tidak dipatahkan; kolom teks panjang diberi lebar minimum */
+td:first-child,th:first-child{white-space:nowrap}
+.table-wrap th.nw,.table-wrap td.nw{white-space:nowrap;width:1%}
+td.nw .cl{display:block;max-width:none;max-height:none;white-space:nowrap;overflow:visible;cursor:default}
+.table-wrap td:not(.nw):not(.act) .cl{min-width:170px}
+.table-wrap td:not(.nw):not(.act):not(:first-child){min-width:170px}
 </style></head><body>
 <header><div class="wrap hero"><div class="avatar">RH</div><div><h1 id="name"></h1><div class="sub" id="institution"></div><div id="nip"></div></div></div></header>
 <nav><div class="wrap nav" id="nav"></div></nav>
@@ -308,9 +314,10 @@ const lnk=v=>{v=String(v||"").trim();return !v?"-":/^https?:\/\/\S+$/i.test(v)?`
 function typeCard(s,k){const T=CFG[s].types[k],list=listOf(s,k),key=s+"|"+k;
  const FS=T.f.filter(f=>!f.x||list.some(e=>e.v[f.k]));
  const COLS=[];FS.forEach(f=>{if(!f.bg)COLS.push({f});else if(!COLS.some(c=>c.bg===f.bg))COLS.push({bg:f.bg,fs:FS.filter(x=>x.bg===f.bg)})});
+ COLS.forEach(c=>{if(c.bg)return;c.nw=c.f.k==="nim"||list.every(e=>{const v=String(e.v[c.f.k]||"").trim();return v.length<=22&&!/[\n]|https?:/i.test(v)})});
  const pages=Math.max(1,Math.ceil(list.length/PG)),p=Math.min(Math.max(1,pg[key]||1),pages);pg[key]=p;
  const off=(p-1)*PG,part=list.slice(off,off+PG);
- const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th>${esc(c.bg||c.f.l)}</th>`).join("")}<th class="act">Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
+ const tbl=list.length?`<div class="table-wrap"><table><thead><tr><th>No.</th>${COLS.map(c=>`<th${c.nw?' class="nw"':""}>${esc(c.bg||c.f.l)}</th>`).join("")}<th class="act">Aksi</th></tr></thead><tbody>${part.map((e,i)=>`<tr><td>${off+i+1}</td>${COLS.map(c=>c.bg?`<td>${c.fs.map(f=>`<div><b>${esc(f.l)}:</b> ${lnk(e.v[f.k])}</div>`).join("")}</td>`:`<td${c.nw?' class="nw"':""}>${cell(e.v[c.f.k])}</td>`).join("")}<td class="act">${acts(e.id)}</td></tr>`).join("")}</tbody></table></div>${pager(key,p,pages,list.length)}`:`<div class="empty">Belum ada data. Klik “+ Tambah”.</div>`;
  const imp=s==="teaching"&&["mk","bimb","uji"].includes(k)?`<button type="button" class="btn sm" data-imp="${k}" title="Impor ${esc(T.name)} dari file SK (PDF / Excel)">\u2b06 Impor</button><button type="button" class="btn sm" data-tpl="${k}" title="Unduh contoh format Excel untuk impor ${esc(T.name)}">\u2b07 Template</button>`:"";
  return `<div class="card"><div class="card-head"><h3>${esc(T.name)}<span class="count">${list.length}</span></h3><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${imp}<button class="btn sm" data-add="${s}" data-type="${k}">+ Tambah</button></span></div>${tbl}</div>`}
 function renderSec(s){$("e-"+s).innerHTML=s==="profile"?psaCard():Object.keys(CFG[s].types).map(k=>typeCard(s,k)).join("")}
